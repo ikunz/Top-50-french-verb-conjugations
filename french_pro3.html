@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>French Verb Studio Pro - Corrected Audio</title>
+    <title>French Verb Studio Pro - Final Version</title>
     <style>
         :root {
             --primary: #4f46e5;
@@ -111,14 +111,50 @@
         }
 
         .card-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             text-align: center;
             margin-bottom: 30px;
             border-bottom: 2px solid var(--bg);
             padding-bottom: 20px;
         }
 
-        .big-verb { font-size: 2.5rem; color: var(--primary); font-weight: 800; margin: 0; }
-        .tense-label { color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem; margin-top: 5px;}
+        .verb-infinitive-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        .big-verb { 
+            font-size: 2.5rem; 
+            color: var(--primary); 
+            font-weight: 800; 
+            margin: 0; 
+        }
+
+        .infinitive-speaker {
+            font-size: 1.5rem;
+            color: var(--primary);
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .infinitive-speaker:hover {
+            background: #e0e7ff;
+        }
+
+        .tense-label { 
+            color: #64748b; 
+            font-weight: 600; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            font-size: 0.9rem; 
+            margin-top: 5px;
+        }
 
         /* CONJUGATION ROWS */
         .conj-row {
@@ -169,7 +205,12 @@
         <div class="content">
             <div class="card" id="card">
                 <div class="card-header">
-                    <h2 class="big-verb" id="display-verb">...</h2>
+                    <div class="verb-infinitive-area">
+                        <h2 class="big-verb" id="display-verb">...</h2>
+                        <div class="infinitive-speaker" id="infinitive-speaker" onclick="speakInfinitive()">
+                            🔊
+                        </div>
+                    </div>
                     <div class="tense-label" id="display-tense">Present Indicative</div>
                 </div>
                 <div id="conjugation-rows">
@@ -179,7 +220,7 @@
     </div>
 
     <script>
-        // --- DATA ENGINE (Same as before, only JS logic changed) ---
+        // --- DATA ENGINE ---
         
         const endings = {
             fut: ["ai", "as", "a", "ons", "ez", "ont"],
@@ -255,15 +296,12 @@
         const synth = window.speechSynthesis;
         let frenchVoice = null;
 
-        // Function to find the French voice
         const loadVoices = () => {
             const voices = synth.getVoices();
-            // Try to find any voice that includes 'fr' (French)
             frenchVoice = voices.find(v => v.lang.includes('fr'));
         };
 
         window.onload = () => {
-            // Ensure voices are loaded on start and if list changes
             loadVoices(); 
             if (speechSynthesis.onvoiceschanged !== undefined) {
                 speechSynthesis.onvoiceschanged = loadVoices;
@@ -336,8 +374,13 @@
             });
         }
 
+        // NEW FUNCTION: Speak only the infinitive
+        function speakInfinitive() {
+            const currentVerb = verbs[state.verbIndex].i;
+            speak(currentVerb);
+        }
+
         function generateConjugations(v, tense) {
-            // Conjugation logic remains the same (reliable engine)
             const regStem = v.i.substring(0, v.i.length - 2); 
             if (tense === 'pres') {
                 if (v.p) return v.p; 
@@ -371,14 +414,11 @@
             return ['a','e','i','o','u','y','h','é','ê'].includes(str.charAt(0).toLowerCase());
         }
 
-        // --- FIXED SPEAK FUNCTION ---
         function speak(text) {
             synth.cancel();
             const ut = new SpeechSynthesisUtterance(text);
             ut.lang = 'fr-FR';
             
-            // AGGRESSIVE VOICE CHECK: If frenchVoice is null (e.g., failed to load initially),
-            // search again right before speaking to ensure we assign a French voice object.
             if (!frenchVoice) {
                 const voices = synth.getVoices();
                 frenchVoice = voices.find(v => v.lang.includes('fr'));
@@ -388,7 +428,7 @@
                 ut.voice = frenchVoice;
             }
 
-            ut.rate = 0.85; // Slightly slower for clarity
+            ut.rate = 0.85; 
             synth.speak(ut);
         }
 
