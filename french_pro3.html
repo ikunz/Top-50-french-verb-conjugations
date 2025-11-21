@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>French Verb Studio Pro - Corrected Audio</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR (Verbs) */
+        .sidebar {
+            width: 260px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: var(--primary);
+            color: white;
+        }
+        .sidebar-header h1 { margin: 0; font-size: 1.2rem; }
+        .sidebar-header p { margin: 5px 0 0; opacity: 0.8; font-size: 0.8rem; }
+
+        .verb-list {
+            overflow-y: auto;
+            flex: 1;
+            padding: 10px;
+        }
+
+        .verb-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-radius: 6px;
+            margin-bottom: 2px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .verb-item:hover { background: #eff6ff; color: var(--primary); }
+        .verb-item.active { background: var(--primary); color: white; }
+        .verb-item span.en { font-weight: 400; opacity: 0.7; font-size: 0.9em; }
+
+        /* MAIN CONTENT */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            background: #e0e7ff;
+            padding: 0 20px;
+            overflow-x: auto;
+            flex-shrink: 0;
+        }
+
+        .tab {
+            padding: 15px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #64748b;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+        }
+
+        .tab:hover { color: var(--primary); }
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+        /* CONTENT AREA */
+        .content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+            height: fit-content;
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--bg);
+            padding-bottom: 20px;
+        }
+
+        .big-verb { font-size: 2.5rem; color: var(--primary); font-weight: 800; margin: 0; }
+        .tense-label { color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem; margin-top: 5px;}
+
+        /* CONJUGATION ROWS */
+        .conj-row {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: 0.2s;
+            border-radius: 8px;
+        }
+
+        .conj-row:hover { background-color: #f0fdf4; transform: translateX(5px); border-color: transparent;}
+        
+        .pronoun { width: 100px; font-weight: bold; color: #64748b; }
+        .conjugation { font-size: 1.2rem; font-weight: 600; color: var(--text); flex: 1; }
+        .icon { opacity: 0; color: var(--primary); transition: 0.2s; }
+        .conj-row:hover .icon { opacity: 1; }
+
+        @media (max-width: 700px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: 200px; }
+            .content { padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>🇫🇷 Verb Studio</h1>
+            <p>Select a verb</p>
+        </div>
+        <div class="verb-list" id="verb-list">
+            </div>
+    </div>
+
+    <div class="main">
+        <div class="tabs" id="tabs">
+            <div class="tab active" onclick="setTense('pres')">Présent</div>
+            <div class="tab" onclick="setTense('pc')">Passé Composé</div>
+            <div class="tab" onclick="setTense('imp')">Imparfait</div>
+            <div class="tab" onclick="setTense('fut')">Futur</div>
+            <div class="tab" onclick="setTense('cond')">Conditionnel</div>
+            <div class="tab" onclick="setTense('subj')">Subjonctif</div>
+        </div>
+
+        <div class="content">
+            <div class="card" id="card">
+                <div class="card-header">
+                    <h2 class="big-verb" id="display-verb">...</h2>
+                    <div class="tense-label" id="display-tense">Present Indicative</div>
+                </div>
+                <div id="conjugation-rows">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA ENGINE (Same as before, only JS logic changed) ---
+        
+        const endings = {
+            fut: ["ai", "as", "a", "ons", "ez", "ont"],
+            imp: ["ais", "ais", "ait", "ions", "iez", "aient"],
+            subj: ["e", "es", "e", "ions", "iez", "ent"]
+        };
+
+        const pronouns = ["Je", "Tu", "Il/Elle", "Nous", "Vous", "Ils/Elles"];
+        
+        const auxData = {
+            avoir: ["ai", "as", "a", "avons", "avez", "ont"],
+            être: ["suis", "es", "est", "sommes", "êtes", "sont"]
+        };
+
+        const verbs = [
+            {i:"être", t:"to be", a:"a", pp:"été", fs:"ser", is:"ét", ss:"soi", p:["suis","es","est","sommes","êtes","sont"]},
+            {i:"avoir", t:"to have", a:"a", pp:"eu", fs:"aur", is:"av", ss:"ai", p:["ai","as","a","avons","avez","ont"]},
+            {i:"aller", t:"to go", a:"e", pp:"allé", fs:"ir", is:"all", ss:"aill", p:["vais","vas","va","allons","allez","vont"]},
+            {i:"faire", t:"to do", a:"a", pp:"fait", fs:"fer", is:"fais", ss:"fass", p:["fais","fais","fait","faisons","faites","font"]},
+            {i:"dire", t:"to say", a:"a", pp:"dit", fs:"dir", is:"dis", ss:"dis", p:["dis","dis","dit","disons","dites","disent"]},
+            {i:"voir", t:"to see", a:"a", pp:"vu", fs:"verr", is:"voy", ss:"voi", p:["vois","vois","voit","voyons","voyez","voient"]},
+            {i:"savoir", t:"to know", a:"a", pp:"su", fs:"saur", is:"sav", ss:"sach", p:["sais","sais","sait","savons","savez","savent"]},
+            {i:"pouvoir", t:"can", a:"a", pp:"pu", fs:"pourr", is:"pouv", ss:"puiss", p:["peux","peux","peut","pouvons","pouvez","peuvent"]},
+            {i:"vouloir", t:"to want", a:"a", pp:"voulu", fs:"voudr", is:"voul", ss:"veuill", p:["veux","veux","veut","voulons","voulez","veulent"]},
+            {i:"venir", t:"to come", a:"e", pp:"venu", fs:"viendr", is:"ven", ss:"vienn", p:["viens","viens","vient","venons","venez","viennent"]},
+            {i:"prendre", t:"to take", a:"a", pp:"pris", fs:"prendr", is:"pren", ss:"prenn", p:["prends","prends","prend","prenons","prenez","prennent"]},
+            {i:"arriver", t:"to arrive", a:"e", pp:"arrivé", reg:true},
+            {i:"croire", t:"to believe", a:"a", pp:"cru", fs:"croir", is:"croy", ss:"croi", p:["crois","crois","croit","croyons","croyez","croient"]},
+            {i:"mettre", t:"to put", a:"a", pp:"mis", fs:"mettr", is:"mett", ss:"mett", p:["mets","mets","met","mettons","mettez","mettent"]},
+            {i:"passer", t:"to pass", a:"a", pp:"passé", reg:true},
+            {i:"devoir", t:"must", a:"a", pp:"dû", fs:"devr", is:"dev", ss:"doiv", p:["dois","dois","doit","devons","devez","doivent"]},
+            {i:"parler", t:"to speak", a:"a", pp:"parlé", reg:true},
+            {i:"trouver", t:"to find", a:"a", pp:"trouvé", reg:true},
+            {i:"donner", t:"to give", a:"a", pp:"donné", reg:true},
+            {i:"comprendre", t:"understand", a:"a", pp:"compris", fs:"comprendr", is:"compren", ss:"comprenn", p:["comprends","comprends","comprend","comprenons","comprenez","comprennent"]},
+            {i:"connaître", t:"to know", a:"a", pp:"connu", fs:"connaîtr", is:"connaiss", ss:"connaiss", p:["connais","connais","connaît","connaissons","connaissez","connaissent"]},
+            {i:"partir", t:"to leave", a:"e", pp:"parti", fs:"partir", is:"part", ss:"part", p:["pars","pars","part","partons","partez","partent"]},
+            {i:"demander", t:"to ask", a:"a", pp:"demandé", reg:true},
+            {i:"tenir", t:"to hold", a:"a", pp:"tenu", fs:"tiendr", is:"ten", ss:"tienn", p:["tiens","tiens","tient","tenons","tenez","tiennent"]},
+            {i:"aimer", t:"to like", a:"a", pp:"aimé", reg:true},
+            {i:"penser", t:"to think", a:"a", pp:"pensé", reg:true},
+            {i:"rester", t:"to stay", a:"e", pp:"resté", reg:true},
+            {i:"manger", t:"to eat", a:"a", pp:"mangé", reg:true},
+            {i:"appeler", t:"to call", a:"a", pp:"appelé", reg:true}, 
+            {i:"sentir", t:"to feel", a:"a", pp:"senti", fs:"sentir", is:"sent", ss:"sent", p:["sens","sens","sent","sentons","sentez","sentent"]},
+            {i:"attendre", t:"to wait", a:"a", pp:"attendu", fs:"attendr", is:"attend", ss:"attend", p:["attends","attends","attend","attendons","attendez","attendent"]},
+            {i:"sortir", t:"to go out", a:"e", pp:"sorti", fs:"sortir", is:"sort", ss:"sort", p:["sors","sors","sort","sortons","sortez","sortent"]},
+            {i:"devenir", t:"to become", a:"e", pp:"devenu", fs:"deviendr", is:"deven", ss:"devienn", p:["deviens","deviens","devient","devenons","devenez","deviennent"]},
+            {i:"entendre", t:"to hear", a:"a", pp:"entendu", fs:"entendr", is:"entend", ss:"entend", p:["entends","entends","entend","entendons","entendez","entendent"]},
+            {i:"regarder", t:"to look", a:"a", pp:"regardé", reg:true},
+            {i:"rendre", t:"to return", a:"a", pp:"rendu", fs:"rendr", is:"rend", ss:"rend", p:["rends","rends","rend","rendons","rendez","rendent"]},
+            {i:"revenir", t:"come back", a:"e", pp:"revenu", fs:"reviendr", is:"reven", ss:"revienn", p:["reviens","reviens","revient","revenons","revenez","reviennent"]},
+            {i:"mourir", t:"to die", a:"e", pp:"mort", fs:"mourr", is:"mour", ss:"meur", p:["meurs","meurs","meurt","mourons","mourez","meurent"]},
+            {i:"recevoir", t:"to receive", a:"a", pp:"reçu", fs:"recevr", is:"recev", ss:"reçoiv", p:["reçois","reçois","reçoit","recevons","recevez","reçoivent"]},
+            {i:"vivre", t:"to live", a:"a", pp:"vécu", fs:"vivr", is:"viv", ss:"viv", p:["vis","vis","vit","vivons","vivez","vivent"]},
+            {i:"entrer", t:"to enter", a:"e", pp:"entré", reg:true},
+            {i:"porter", t:"to carry", a:"a", pp:"porté", reg:true},
+            {i:"chercher", t:"to search", a:"a", pp:"cherché", reg:true},
+            {i:"monter", t:"to go up", a:"e", pp:"monté", reg:true},
+            {i:"écrire", t:"to write", a:"a", pp:"écrit", fs:"écrir", is:"écriv", ss:"écriv", p:["écris","écris","écrit","écrivons","écrivez","écrivent"]},
+            {i:"perdre", t:"to lose", a:"a", pp:"perdu", fs:"perdr", is:"perd", ss:"perd", p:["perds","perds","perd","perdons","perdez","perdent"]},
+            {i:"suivre", t:"to follow", a:"a", pp:"suivi", fs:"suivr", is:"suiv", ss:"suiv", p:["suis","suis","suit","suivons","suivez","suivent"]},
+            {i:"commencer", t:"to start", a:"a", pp:"commencé", reg:true},
+            {i:"montrer", t:"to show", a:"a", pp:"montré", reg:true}
+        ];
+
+        // --- APP STATE and VOICE SETUP ---
+        let state = {
+            verbIndex: 0,
+            tense: 'pres'
+        };
+
+        const synth = window.speechSynthesis;
+        let frenchVoice = null;
+
+        // Function to find the French voice
+        const loadVoices = () => {
+            const voices = synth.getVoices();
+            // Try to find any voice that includes 'fr' (French)
+            frenchVoice = voices.find(v => v.lang.includes('fr'));
+        };
+
+        window.onload = () => {
+            // Ensure voices are loaded on start and if list changes
+            loadVoices(); 
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = loadVoices;
+            }
+
+            renderSidebar();
+            updateView();
+        };
+
+        // --- RENDERING and INTERACTION LOGIC ---
+
+        function renderSidebar() {
+            const list = document.getElementById('verb-list');
+            list.innerHTML = '';
+            verbs.forEach((v, idx) => {
+                const el = document.createElement('div');
+                el.className = `verb-item ${idx === state.verbIndex ? 'active' : ''}`;
+                el.onclick = () => { 
+                    state.verbIndex = idx; 
+                    renderSidebar(); 
+                    updateView(); 
+                };
+                el.innerHTML = `<span>${v.i}</span><span class="en">${v.t}</span>`;
+                list.appendChild(el);
+            });
+        }
+
+        function setTense(t) {
+            state.tense = t;
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.querySelector(`.tabs .tab:nth-child(${['pres','pc','imp','fut','cond','subj'].indexOf(t) + 1})`).classList.add('active');
+            updateView();
+        }
+
+        function updateView() {
+            const v = verbs[state.verbIndex];
+            const t = state.tense;
+
+            document.getElementById('display-verb').innerText = v.i;
+            
+            const titles = {
+                pres: "Présent (Present)", pc: "Passé Composé (Past)", imp: "Imparfait (Imperfect)", 
+                fut: "Futur Simple (Future)", cond: "Conditionnel (Conditional)", subj: "Subjonctif (Subjunctive)"
+            };
+            document.getElementById('display-tense').innerText = titles[t];
+
+            const rows = document.getElementById('conjugation-rows');
+            rows.innerHTML = '';
+
+            const conjugations = generateConjugations(v, t);
+
+            conjugations.forEach((text, i) => {
+                const pronoun = pronouns[i];
+                let displayPronoun = pronoun;
+                
+                if (i === 0 && isVowel(text)) displayPronoun = "J'";
+                else if (i === 0) displayPronoun = "Je";
+
+                const fullText = (displayPronoun === "J'" ? "J'" : displayPronoun + " ") + text;
+
+                const row = document.createElement('div');
+                row.className = 'conj-row';
+                row.onclick = () => speak(fullText);
+                row.innerHTML = `
+                    <div class="pronoun">${displayPronoun}</div>
+                    <div class="conjugation">${text}</div>
+                    <div class="icon">🔊</div>
+                `;
+                rows.appendChild(row);
+            });
+        }
+
+        function generateConjugations(v, tense) {
+            // Conjugation logic remains the same (reliable engine)
+            const regStem = v.i.substring(0, v.i.length - 2); 
+            if (tense === 'pres') {
+                if (v.p) return v.p; 
+                if (v.reg) return [regStem+"e", regStem+"es", regStem+"e", regStem+"ons", regStem+"ez", regStem+"ent"];
+            }
+            if (tense === 'pc') {
+                const auxVerb = v.a === 'e' ? 'être' : 'avoir';
+                const auxConj = auxData[auxVerb]; 
+                return auxConj.map(aux => `${aux} ${v.pp}`);
+            }
+            if (tense === 'imp') {
+                let stem = v.is; if (!stem && v.reg) stem = regStem; if (!stem) stem = v.i.substring(0, v.i.length-2); 
+                return endings.imp.map(e => stem + e);
+            }
+            if (tense === 'fut' || tense === 'cond') {
+                let stem = v.fs ? v.fs : v.i; 
+                if (!v.fs && v.i.endsWith('re')) stem = v.i.substring(0, v.i.length - 1);
+                const finalEndings = tense === 'fut' ? endings.fut : endings.imp;
+                return finalEndings.map(e => stem + e);
+            }
+            if (tense === 'subj') {
+                let stem = v.ss;
+                if (!stem && v.reg) stem = regStem;
+                if (!stem) stem = v.i.substring(0, v.i.length-2);
+                return endings.subj.map((e) => stem + e);
+            }
+            return [];
+        }
+
+        function isVowel(str) {
+            return ['a','e','i','o','u','y','h','é','ê'].includes(str.charAt(0).toLowerCase());
+        }
+
+        // --- FIXED SPEAK FUNCTION ---
+        function speak(text) {
+            synth.cancel();
+            const ut = new SpeechSynthesisUtterance(text);
+            ut.lang = 'fr-FR';
+            
+            // AGGRESSIVE VOICE CHECK: If frenchVoice is null (e.g., failed to load initially),
+            // search again right before speaking to ensure we assign a French voice object.
+            if (!frenchVoice) {
+                const voices = synth.getVoices();
+                frenchVoice = voices.find(v => v.lang.includes('fr'));
+            }
+
+            if (frenchVoice) {
+                ut.voice = frenchVoice;
+            }
+
+            ut.rate = 0.85; // Slightly slower for clarity
+            synth.speak(ut);
+        }
+
+    </script>
+</body>
+</html>
