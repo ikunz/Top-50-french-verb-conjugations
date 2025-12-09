@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top 100 French Verbs (Spoken Frequency)</title>
+    <style>
+        :root {
+            --primary: #002395; /* French Blue */
+            --accent: #ED2939; /* French Red */
+            --vulgar: #d63384; /* Pink/Purple for vulgar/slang warning */
+            --bg: #f4f4f9;
+            --text: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        h1 { margin: 0; font-size: 1.5rem; }
+        p.subtitle { margin: 5px 0 0; opacity: 0.8; font-size: 0.9rem; }
+
+        /* Layout */
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Left Side: List */
+        .verb-list-container {
+            width: 380px;
+            background: white;
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-box {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            background: #fafafa;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .verb-list {
+            flex: 1;
+            overflow-y: auto;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .verb-item {
+            padding: 12px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: grid;
+            grid-template-columns: 30px 1fr 1fr;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+
+        .verb-item:hover { background-color: #f0f4ff; }
+        .verb-item.active { 
+            background-color: var(--primary); 
+            color: white;
+            border-left: 5px solid var(--accent);
+        }
+
+        .verb-rank { 
+            font-size: 0.8rem; 
+            color: #999; 
+            font-weight: bold;
+        }
+        .verb-item.active .verb-rank { color: #ccc; }
+        
+        .verb-fr { font-weight: 600; }
+        .verb-en { font-size: 0.9em; opacity: 0.8; text-align: right; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+        /* Right Side: Details */
+        .verb-details {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-image: radial-gradient(#e1e1e1 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 50px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            max-width: 650px;
+            width: 100%;
+            text-align: center;
+            border-top: 6px solid var(--accent);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .card.show { opacity: 1; transform: translateY(0); }
+
+        .verb-title { font-size: 3.5rem; color: var(--primary); margin: 0; line-height: 1.1; }
+        .verb-translation { font-size: 1.8rem; color: #555; margin-bottom: 25px; font-weight: 300; }
+        .divider { height: 2px; background: #eee; width: 60%; margin: 25px auto; }
+        
+        .example-box {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: left;
+            border-left: 5px solid var(--primary);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+        
+        .example-sentence { font-size: 1.4rem; font-weight: 500; margin-bottom: 8px; color: #222; }
+        .example-trans { color: #666; font-size: 1.1rem; }
+
+        .tags { margin-top: 15px; display: flex; gap: 10px; justify-content: center; }
+        .tag {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tag.regular { background: #e3f2fd; color: #1565c0; }
+        .tag.irregular { background: #fff3e0; color: #ef6c00; }
+        .tag.vulgar { background: #fce4ec; color: #c2185b; border: 1px solid #f8bbd0; }
+        .tag.slang { background: #f3e5f5; color: #7b1fa2; border: 1px solid #e1bee7; }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #aaa; }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 900px) {
+            .container { flex-direction: column; }
+            .verb-list-container { width: 100%; height: 40%; border-right: none; border-bottom: 1px solid #ddd; }
+            .verb-details { height: 60%; padding: 20px; }
+            .card { padding: 30px; }
+            .verb-title { font-size: 2.5rem; }
+            .verb-translation { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🇫🇷 Top 100 French Verbs</h1>
+    <p class="subtitle">Ordered by common spoken frequency, including slang.</p>
+</header>
+
+<div class="container">
+    <div class="verb-list-container">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search (e.g. eat, foutre, bosser)...">
+        </div>
+        <ul class="verb-list" id="verbList">
+            </ul>
+    </div>
+
+    <div class="verb-details">
+        <div class="card" id="detailCard">
+            <h2 class="verb-title" id="d-verb">Bienvenue</h2>
+            <div class="tags" id="d-tags">
+                <span class="tag regular">Tool</span>
+            </div>
+            <p class="verb-translation" id="d-trans">Welcome</p>
+            
+            <div class="divider"></div>
+            <div class="example-box">
+                <div class="example-sentence" id="d-ex-fr">Sélectionnez un verbe dans la liste.</div>
+                <div class="example-trans" id="d-ex-en">Select a verb from the list to begin.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Data: Top 100 Verbs (Mixed Spoken Frequency)
+    const verbs = [
+        { fr: "être", en: "to be", group: "Irregular", exFr: "Je suis fatigué.", exEn: "I am tired." },
+        { fr: "avoir", en: "to have", group: "Irregular", exFr: "J'ai faim.", exEn: "I am hungry (I have hunger)." },
+        { fr: "aller", en: "to go", group: "Irregular", exFr: "On y va ?", exEn: "Shall we go?" },
+        { fr: "faire", en: "to do / make", group: "Irregular", exFr: "Qu'est-ce que tu fais ?", exEn: "What are you doing?" },
+        { fr: "dire", en: "to say / tell", group: "Irregular", exFr: "Dis-moi tout.", exEn: "Tell me everything." },
+        { fr: "pouvoir", en: "can / to be able", group: "Irregular", exFr: "Tu peux m'aider ?", exEn: "Can you help me?" },
+        { fr: "vouloir", en: "to want", group: "Irregular", exFr: "Je veux dormir.", exEn: "I want to sleep." },
+        { fr: "savoir", en: "to know (facts)", group: "Irregular", exFr: "Je ne sais pas.", exEn: "I don't know." },
+        { fr: "voir", en: "to see", group: "Irregular", exFr: "Tu vois le truc ?", exEn: "Do you see the thing?" },
+        { fr: "devoir", en: "must / to have to", group: "Irregular", exFr: "Je dois partir.", exEn: "I have to leave." },
+        { fr: "venir", en: "to come", group: "Irregular", exFr: "Viens ici !", exEn: "Come here!" },
+        { fr: "falloir", en: "to be necessary", group: "Impersonal", exFr: "Il faut qu'on parle.", exEn: "We need to talk." },
+        { fr: "parler", en: "to speak", group: "Regular -er", exFr: "Je parle un peu français.", exEn: "I speak a little French." },
+        { fr: "croire", en: "to believe", group: "Irregular", exFr: "Je te crois.", exEn: "I believe you." },
+        { fr: "prendre", en: "to take", group: "Irregular", exFr: "Je prends un café.", exEn: "I'll take a coffee." },
+        { fr: "mettre", en: "to put", group: "Irregular", exFr: "Mets-le sur la table.", exEn: "Put it on the table." },
+        { fr: "foutre", en: "to do / put (vulgar)", group: "Vulgar", exFr: "Qu'est-ce que tu fous ?", exEn: "What the f*** are you doing?" },
+        { fr: "aimer", en: "to like / love", group: "Regular -er", exFr: "J'aime ça.", exEn: "I like that." },
+        { fr: "passer", en: "to pass / spend time", group: "Regular -er", exFr: "Passe-moi le sel.", exEn: "Pass me the salt." },
+        { fr: "penser", en: "to think", group: "Regular -er", exFr: "Qu'en penses-tu ?", exEn: "What do you think about it?" },
+        { fr: "attendre", en: "to wait", group: "Regular -re", exFr: "Attends-moi !", exEn: "Wait for me!" },
+        { fr: "trouver", en: "to find", group: "Regular -er", exFr: "Je trouve ça génial.", exEn: "I find that awesome." },
+        { fr: "comprendre", en: "to understand", group: "Irregular", exFr: "Tu comprends ?", exEn: "Do you understand?" },
+        { fr: "connaitre", en: "to know (people)", group: "Irregular", exFr: "Tu connais Pierre ?", exEn: "Do you know Pierre?" },
+        { fr: "laisser", en: "to let / leave", group: "Regular -er", exFr: "Laisse tomber.", exEn: "Let it go (Forget it)." },
+        { fr: "arriver", en: "to arrive / happen", group: "Regular -er", exFr: "J'arrive !", exEn: "I'm coming (arriving)!" },
+        { fr: "donner", en: "to give", group: "Regular -er", exFr: "Donne-moi une chance.", exEn: "Give me a chance." },
+        { fr: "regarder", en: "to look / watch", group: "Regular -er", exFr: "Regarde ça.", exEn: "Look at that." },
+        { fr: "appeler", en: "to call", group: "Regular -er", exFr: "Appelle-moi demain.", exEn: "Call me tomorrow." },
+        { fr: "bouffer", en: "to eat (slang)", group: "Slang", exFr: "On va bouffer ?", exEn: "Are we gonna eat?" },
+        { fr: "partir", en: "to leave", group: "Irregular", exFr: "Il est parti.", exEn: "He has left." },
+        { fr: "rester", en: "to stay", group: "Regular -er", exFr: "Reste avec moi.", exEn: "Stay with me." },
+        { fr: "arrêter", en: "to stop", group: "Regular -er", exFr: "Arrête tes bêtises.", exEn: "Stop your nonsense." },
+        { fr: "demander", en: "to ask", group: "Regular -er", exFr: "Je demande juste.", exEn: "I'm just asking." },
+        { fr: "bosser", en: "to work (slang)", group: "Slang", exFr: "Je bosse trop.", exEn: "I work too much." },
+        { fr: "sortir", en: "to go out / exit", group: "Irregular", exFr: "On sort ce soir ?", exEn: "Are we going out tonight?" },
+        { fr: "entendre", en: "to hear", group: "Regular -re", exFr: "Tu entends ça ?", exEn: "Do you hear that?" },
+        { fr: "chercher", en: "to look for", group: "Regular -er", exFr: "Je cherche mes clés.", exEn: "I'm looking for my keys." },
+        { fr: "répondre", en: "to answer", group: "Regular -re", exFr: "Réponds-moi.", exEn: "Answer me." },
+        { fr: "rendre", en: "to give back / render", group: "Regular -re", exFr: "Ça me rend fou.", exEn: "That drives (renders) me crazy." },
+        { fr: "vivre", en: "to live", group: "Irregular", exFr: "Je vis à Paris.", exEn: "I live in Paris." },
+        { fr: "revenir", en: "to come back", group: "Irregular", exFr: "Je reviens tout de suite.", exEn: "I'll be right back." },
+        { fr: "tenir", en: "to hold", group: "Irregular", exFr: "Tiens, prends ça.", exEn: "Here (hold), take this." },
+        { fr: "kiffer", en: "to like / love (slang)", group: "Slang", exFr: "Je kiffe cette chanson.", exEn: "I really like this song." },
+        { fr: "porter", en: "to wear / carry", group: "Regular -er", exFr: "Elle porte du rouge.", exEn: "She is wearing red." },
+        { fr: "entrer", en: "to enter", group: "Regular -er", exFr: "Entrez, je vous en prie.", exEn: "Come in, please." },
+        { fr: "devenir", en: "to become", group: "Irregular", exFr: "C'est devenu compliqué.", exEn: "It has become complicated." },
+        { fr: "écrire", en: "to write", group: "Irregular", exFr: "Écris ton nom ici.", exEn: "Write your name here." },
+        { fr: "chier", en: "to sh*t / annoy (vulgar)", group: "Vulgar", exFr: "Ça me fait chier.", exEn: "That pisses me off (makes me sh*t)." },
+        { fr: "jouer", en: "to play", group: "Regular -er", exFr: "Tu joues à quoi ?", exEn: "What are you playing at?" },
+        { fr: "finir", en: "to finish", group: "Regular -ir", exFr: "J'ai fini.", exEn: "I have finished." },
+        { fr: "perdre", en: "to lose", group: "Regular -re", exFr: "J'ai perdu mon temps.", exEn: "I wasted (lost) my time." },
+        { fr: "dormir", en: "to sleep", group: "Irregular", exFr: "Tu dors ?", exEn: "Are you sleeping?" },
+        { fr: "manger", en: "to eat", group: "Regular -er", exFr: "À table ! On mange.", exEn: "Table set! We're eating." },
+        { fr: "rappeler", en: "to call back / remind", group: "Regular -er", exFr: "Rappelle-moi plus tard.", exEn: "Call me back later." },
+        { fr: "sembler", en: "to seem", group: "Regular -er", exFr: "Ça semble correct.", exEn: "That seems correct." },
+        { fr: "commencer", en: "to start", group: "Regular -er", exFr: "Ça commence quand ?", exEn: "When does it start?" },
+        { fr: "suivre", en: "to follow", group: "Irregular", exFr: "Suis-moi.", exEn: "Follow me." },
+        { fr: "montrer", en: "to show", group: "Regular -er", exFr: "Montre-moi.", exEn: "Show me." },
+        { fr: "emmerder", en: "to annoy / f*** (vulgar)", group: "Vulgar", exFr: "Je t'emmerde.", exEn: "Screw you (I annoy you)." },
+        { fr: "marcher", en: "to walk / work (function)", group: "Regular -er", exFr: "Ça marche !", exEn: "That works!" },
+        { fr: "se barrer", en: "to leave / scram (slang)", group: "Slang", exFr: "Allez, on se barre.", exEn: "Come on, let's get out of here." },
+        { fr: "compter", en: "to count", group: "Regular -er", exFr: "Je compte sur toi.", exEn: "I'm counting on you." },
+        { fr: "entrer", en: "to enter", group: "Regular -er", exFr: "On n'entre pas.", exEn: "Do not enter." },
+        { fr: "piger", en: "to get it / understand (slang)", group: "Slang", exFr: "T'as pigé ?", exEn: "Did you get it?" },
+        { fr: "boire", en: "to drink", group: "Irregular", exFr: "On va boire un verre ?", exEn: "Shall we go drink a glass?" },
+        { fr: "garder", en: "to keep", group: "Regular -er", exFr: "Garde la monnaie.", exEn: "Keep the change." },
+        { fr: "gueuler", en: "to shout / yell (slang)", group: "Slang", exFr: "Arrête de gueuler !", exEn: "Stop yelling!" },
+        { fr: "mourir", en: "to die", group: "Irregular", exFr: "Je meurs de faim.", exEn: "I'm dying of hunger." },
+        { fr: "sentir", en: "to smell / feel", group: "Irregular", exFr: "Ça sent bon.", exEn: "That smells good." },
+        { fr: "quitter", en: "to leave (someone/thing)", group: "Regular -er", exFr: "Ne me quitte pas.", exEn: "Don't leave me." },
+        { fr: "payer", en: "to pay", group: "Regular -er", exFr: "C'est moi qui paie.", exEn: "It's on me (I pay)." },
+        { fr: "acheter", en: "to buy", group: "Regular -er", exFr: "J'ai acheté du pain.", exEn: "I bought some bread." },
+        { fr: "aider", en: "to help", group: "Regular -er", exFr: "Aide-moi !", exEn: "Help me!" },
+        { fr: "niquer", en: "to screw / break (vulgar)", group: "Vulgar", exFr: "J'ai niqué mon téléphone.", exEn: "I wrecked (screwed) my phone." },
+        { fr: "écouter", en: "to listen", group: "Regular -er", exFr: "Écoute-moi bien.", exEn: "Listen to me well." },
+        { fr: "continuer", en: "to continue", group: "Regular -er", exFr: "Continue tout droit.", exEn: "Continue straight ahead." },
+        { fr: "servir", en: "to serve / be useful", group: "Irregular", exFr: "Ça sert à rien.", exEn: "That's useless (serves nothing)." },
+        { fr: "fermer", en: "to close", group: "Regular -er", exFr: "Ferme la porte.", exEn: "Close the door." },
+        { fr: "descendre", en: "to go down", group: "Regular -er", exFr: "Je descends !", exEn: "I'm coming down!" },
+        { fr: "oublier", en: "to forget", group: "Regular -er", exFr: "J'ai oublié.", exEn: "I forgot." },
+        { fr: "apprendre", en: "to learn", group: "Irregular", exFr: "J'apprends le français.", exEn: "I am learning French." },
+        { fr: "pleurer", en: "to cry", group: "Regular -er", exFr: "Ne pleure pas.", exEn: "Don't cry." },
+        { fr: "espérer", en: "to hope", group: "Regular -er", exFr: "J'espère que oui.", exEn: "I hope so." },
+        { fr: "rigoler", en: "to laugh / joke (casual)", group: "Regular -er", exFr: "Je rigole !", exEn: "I'm joking!" },
+        { fr: "tuer", en: "to kill", group: "Regular -er", exFr: "Ça tue !", exEn: "That's killer (awesome)!" },
+        { fr: "changer", en: "to change", group: "Regular -er", exFr: "Il faut changer.", exEn: "We must change." },
+        { fr: "travailler", en: "to work", group: "Regular -er", exFr: "Je travaille ici.", exEn: "I work here." },
+        { fr: "essayer", en: "to try", group: "Regular -er", exFr: "Essaie encore.", exEn: "Try again." },
+        { fr: "recevoir", en: "to receive", group: "Irregular", exFr: "J'ai reçu ton message.", exEn: "I received your message." },
+        { fr: "gagner", en: "to win / earn", group: "Regular -er", exFr: "On a gagné !", exEn: "We won!" },
+        { fr: "refuser", en: "to refuse", group: "Regular -er", exFr: "Je ne peux pas refuser.", exEn: "I can't refuse." },
+        { fr: "lire", en: "to read", group: "Irregular", exFr: "Je lis un livre.", exEn: "I am reading a book." },
+        { fr: "vendre", en: "to sell", group: "Regular -re", exFr: "À vendre.", exEn: "For sale." },
+        { fr: "préparer", en: "to prepare", group: "Regular -er", exFr: "Prépare-toi.", exEn: "Get ready (prepare yourself)." },
+        { fr: "choisir", en: "to choose", group: "Regular -ir", exFr: "Choisis une carte.", exEn: "Choose a card." },
+        { fr: "tomber", en: "to fall", group: "Regular -er", exFr: "Laisse tomber.", exEn: "Let it drop (Never mind)." },
+        { fr: "casser", en: "to break", group: "Regular -er", exFr: "C'est cassé.", exEn: "It's broken." },
+        { fr: "détester", en: "to hate", group: "Regular -er", exFr: "Je déteste ça.", exEn: "I hate that." },
+        { fr: "adorer", en: "to adore / love", group: "Regular -er", exFr: "J'adore Paris.", exEn: "I love Paris." }
+    ];
+
+    const verbListEl = document.getElementById('verbList');
+    const searchInput = document.getElementById('searchInput');
+    const detailCard = document.getElementById('detailCard');
+
+    // Render List
+    function renderList(filter = "") {
+        verbListEl.innerHTML = "";
+        const filtered = verbs.filter(v => 
+            v.fr.toLowerCase().includes(filter.toLowerCase()) || 
+            v.en.toLowerCase().includes(filter.toLowerCase())
+        );
+
+        filtered.forEach((v, index) => {
+            const actualIndex = verbs.indexOf(v) + 1;
+            const li = document.createElement('li');
+            li.className = 'verb-item';
+            li.innerHTML = `
+                <span class="verb-rank">#${actualIndex}</span>
+                <span class="verb-fr">${v.fr}</span> 
+                <span class="verb-en">${v.en}</span>
+            `;
+            li.onclick = () => selectVerb(v, li);
+            verbListEl.appendChild(li);
+        });
+    }
+
+    // Selection Logic
+    function selectVerb(verb, el) {
+        // Highlight list item
+        document.querySelectorAll('.verb-item').forEach(i => i.classList.remove('active'));
+        if(el) el.classList.add('active');
+
+        // Update Card
+        detailCard.classList.remove('show'); // Reset animation
+        
+        setTimeout(() => {
+            document.getElementById('d-verb').innerText = verb.fr;
+            document.getElementById('d-trans').innerText = verb.en;
+            
+            // Handle Group Tag Styling
+            const tagContainer = document.getElementById('d-tags');
+            tagContainer.innerHTML = '';
+            
+            let groupClass = 'regular';
+            if(verb.group.toLowerCase().includes('irregular')) groupClass = 'irregular';
+            if(verb.group.toLowerCase().includes('vulgar')) groupClass = 'vulgar';
+            if(verb.group.toLowerCase().includes('slang')) groupClass = 'slang';
+            
+            tagContainer.innerHTML = `<span class="tag ${groupClass}">${verb.group}</span>`;
+
+            document.getElementById('d-ex-fr').innerText = verb.exFr;
+            document.getElementById('d-ex-en').innerText = verb.exEn;
+            
+            detailCard.classList.add('show'); // Trigger animation
+        }, 100);
+    }
+
+    // Search Listener
+    searchInput.addEventListener('input', (e) => {
+        renderList(e.target.value);
+    });
+
+    // Initialize
+    renderList();
+    setTimeout(() => {
+        const firstItem = verbListEl.firstElementChild;
+        if(firstItem) selectVerb(verbs[0], firstItem);
+    }, 100);
+
+</script>
+
+</body>
+</html>
