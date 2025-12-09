@@ -375,7 +375,7 @@
             {i:"expliquer", t:"to explain", reg:true},
             {i:"voyager", t:"to travel", reg:true},
             {i:"chanter", t:"to sing", reg:true},
-            {i:"tuer", t:"to kill", reg:true},
+            {i:"tuer", "to kill", reg:true},
             {i:"changer", t:"to change", reg:true},
             {i:"espérer", t:"to hope", reg:true},
             {i:"essayer", t:"to try", reg:true},
@@ -763,12 +763,15 @@
             frenchVoice = voices.find(v => v.lang.includes('fr'));
         };
 
+        // **CRITICAL FIX:** Ensure the display functions are called after the page structure loads.
         window.onload = () => {
             loadVoices(); 
             if (speechSynthesis.onvoiceschanged !== undefined) {
                 speechSynthesis.onvoiceschanged = loadVoices;
             }
+            // 1. Render the sidebar first to populate the list and set the active state
             renderSidebar();
+            // 2. Then, update the main view with the first verb
             updateView();
 
             // Search Listener
@@ -784,7 +787,7 @@
             const list = document.getElementById('verb-list');
             list.innerHTML = '';
             
-            const limit = 550; // Display max 550 results when searching
+            const limit = allVerbs.length; 
 
             allVerbs.forEach((v, index) => {
                 if (index >= limit) return;
@@ -829,7 +832,7 @@
                     let html = `<span>${v.i}`;
                     if(v.slang) html += ` <span class="slang-tag">Slang</span>`;
                     else if(matchType === "conj") html += ` <span class="match-tag">Form match</span>`;
-                    html += `</span><span class="en">${v.t}</span>`;
+                    html += `</span><span class="en">${v.t.replace(" (Slang)", "")}</span>`; // Clean up translation text for display
                     
                     el.innerHTML = html;
                     list.appendChild(el);
@@ -840,7 +843,11 @@
         function setTense(t) {
             state.tense = t;
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-            document.querySelector(`.tabs .tab:nth-child(${['pres','pc','imp','fut','cond','subj'].indexOf(t) + 1})`).classList.add('active');
+            // Correctly find the active tab based on index
+            const tenseIndex = ['pres','pc','imp','fut','cond','subj'].indexOf(t);
+            if (tenseIndex !== -1) {
+                document.querySelector(`.tabs .tab:nth-child(${tenseIndex + 1})`).classList.add('active');
+            }
             updateView();
         }
 
@@ -866,19 +873,41 @@
                 let displayPronoun = pronoun;
                 
                 // Vowel elision for Je
-                if (i === 0 && isVowel(text)) displayPronoun = "J'";
-                else if (i === 0) displayPronoun = "Je";
+                let prefix = "";
+                if (i === 0 && text && isVowel(text)) {
+                    displayPronoun = "J'";
+                } else if (i === 0) {
+                    displayPronoun = "Je";
+                    prefix = " ";
+                } else {
+                    prefix = " ";
+                }
+                
+                // If it's a reflexive verb
+                let reflexive = "";
+                if (v.i.startsWith("s'") || v.i.startsWith("se ")) {
+                    const reflexivePronouns = ["me", "te", "se", "nous", "vous", "se"];
+                    // Handle elision for reflexive pronouns
+                    if (isVowel(text) && i < 3) {
+                         reflexive = (i === 0 ? "m'" : i === 1 ? "t'" : "s'");
+                    } else if (i < 3) {
+                        reflexive = reflexivePronouns[i] + " ";
+                    } else {
+                        reflexive = reflexivePronouns[i] + " ";
+                    }
+                }
+                
+                const fullText = (i === 0 ? displayPronoun : pronoun) + (i < 3 ? prefix : " ") + reflexive + text;
+
 
                 // Handle Impersonal verbs (falloir, pleuvoir)
                 if ((v.i === 'falloir' || v.i === 'pleuvoir') && i !== 2) return;
-
-                const fullText = (displayPronoun === "J'" ? "J'" : displayPronoun + " ") + text;
 
                 const row = document.createElement('div');
                 row.className = 'conj-row';
                 row.onclick = () => speak(fullText);
                 row.innerHTML = `
-                    <div class="pronoun">${displayPronoun}</div>
+                    <div class="pronoun">${displayPronoun} ${reflexive}</div>
                     <div class="conjugation">${text}</div>
                     <div class="icon">🔊</div>
                 `;
@@ -952,7 +981,8 @@
 
         function isVowel(str) {
             // Checks for vowels and silent 'h'
-            return ['a','e','i','o','u','y','h','é','ê'].includes(str.charAt(0).toLowerCase());
+            const firstChar = str.trim().charAt(0).toLowerCase();
+            return ['a','e','i','o','u','y','h','é','ê'].includes(firstChar);
         }
 
         function speak(text) {
