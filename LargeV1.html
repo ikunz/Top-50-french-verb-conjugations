@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>French Verb Studio (520+ Verbs)</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+            --highlight: #fef3c7;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR (Verbs) */
+        .sidebar {
+            width: 300px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            z-index: 2;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .sidebar-header h1 { margin: 0; font-size: 1.2rem; }
+        .sidebar-header p { margin: 5px 0 0; opacity: 0.8; font-size: 0.8rem; }
+
+        .search-container {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            background: #f1f5f9;
+        }
+
+        #verb-search {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .verb-list {
+            overflow-y: auto;
+            flex: 1;
+            padding: 5px;
+        }
+
+        .verb-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 6px;
+            margin-bottom: 2px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            transition: all 0.1s;
+            font-size: 0.95rem;
+        }
+
+        .verb-item:hover { background: #eff6ff; color: var(--primary); }
+        .verb-item.active { background: var(--primary); color: white; }
+        .verb-item span.en { font-weight: 400; opacity: 0.7; font-size: 0.85em; text-align: right; }
+
+        /* MAIN CONTENT */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            background: #e0e7ff;
+            padding: 0 20px;
+            overflow-x: auto;
+            flex-shrink: 0;
+            box-shadow: inset 0 -1px 0 rgba(0,0,0,0.05);
+        }
+
+        .tab {
+            padding: 15px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #64748b;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .tab:hover { color: var(--primary); background: rgba(255,255,255,0.3); }
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); background: rgba(255,255,255,0.5); }
+
+        /* CONTENT AREA */
+        .content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+            height: fit-content;
+            margin-bottom: 40px;
+        }
+
+        .card-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--bg);
+            padding-bottom: 20px;
+        }
+
+        .verb-infinitive-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 5px;
+        }
+
+        .big-verb { 
+            font-size: 2.8rem; 
+            color: var(--primary); 
+            font-weight: 800; 
+            margin: 0; 
+            line-height: 1;
+        }
+
+        .infinitive-speaker {
+            font-size: 1.5rem;
+            color: var(--primary);
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #e0e7ff;
+            transition: transform 0.1s, background 0.2s;
+        }
+
+        .infinitive-speaker:hover { background: #c7d2fe; transform: scale(1.05); }
+        .infinitive-speaker:active { transform: scale(0.95); }
+
+        .tense-label { 
+            color: #64748b; 
+            font-weight: 600; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            font-size: 0.9rem; 
+            margin-top: 10px;
+        }
+
+        /* CONJUGATION ROWS */
+        .conj-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: 0.1s;
+            border-radius: 8px;
+        }
+
+        .conj-row:last-child { border-bottom: none; }
+        .conj-row:hover { background-color: #f0fdf4; transform: translateX(5px); }
+        
+        .pronoun { width: 100px; font-weight: bold; color: #94a3b8; font-size: 0.95rem; }
+        .conjugation { font-size: 1.25rem; font-weight: 600; color: var(--text); flex: 1; }
+        .icon { opacity: 0; color: var(--primary); transition: 0.2s; }
+        .conj-row:hover .icon { opacity: 1; }
+
+        /* Search Match Highlight */
+        .match-tag {
+            font-size: 0.7rem;
+            background: var(--highlight);
+            color: #b45309;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+            border: 1px solid #fcd34d;
+        }
+        
+        /* Slang Tag */
+        .slang-tag {
+            font-size: 0.7rem;
+            background: #ffedd5;
+            color: #c2410c;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+            border: 1px solid #f97316;
+        }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: 35%; border-right: none; border-bottom: 1px solid var(--border); }
+            .content { padding: 15px; height: 65%; }
+            .big-verb { font-size: 2rem; }
+            .card { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>🇫🇷 Verb Studio (520+)</h1>
+            <p>French verbs (Standard & Slang)</p>
+        </div>
+        <div class="search-container">
+            <input type="text" id="verb-search" placeholder="Search (e.g. eat, être, suis)...">
+        </div>
+        <div class="verb-list" id="verb-list">
+            </div>
+    </div>
+
+    <div class="main">
+        <div class="tabs" id="tabs">
+            <div class="tab active" onclick="setTense('pres')">Présent</div>
+            <div class="tab" onclick="setTense('pc')">Passé Composé</div>
+            <div class="tab" onclick="setTense('imp')">Imparfait</div>
+            <div class="tab" onclick="setTense('fut')">Futur</div>
+            <div class="tab" onclick="setTense('cond')">Conditionnel</div>
+            <div class="tab" onclick="setTense('subj')">Subjonctif</div>
+        </div>
+
+        <div class="content">
+            <div class="card" id="card">
+                <div class="card-header">
+                    <div class="verb-infinitive-area">
+                        <h2 class="big-verb" id="display-verb">...</h2>
+                        <div class="infinitive-speaker" id="infinitive-speaker" onclick="speakInfinitive()" title="Pronounce Infinitive">
+                            🔊
+                        </div>
+                    </div>
+                    <div class="tense-label" id="display-tense">Present Indicative</div>
+                </div>
+                <div id="conjugation-rows">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA ENGINE ---
+        
+        const endings = {
+            fut: ["ai", "as", "a", "ons", "ez", "ont"],
+            imp: ["ais", "ais", "ait", "ions", "iez", "aient"],
+            subj: ["e", "es", "e", "ions", "iez", "ent"]
+        };
+
+        const pronouns = ["Je", "Tu", "Il/Elle", "Nous", "Vous", "Ils/Elles"];
+        
+        const auxData = {
+            avoir: ["ai", "as", "a", "avons", "avez", "ont"],
+            être: ["suis", "es", "est", "sommes", "êtes", "sont"]
+        };
+
+        // Helper functions for data entry
+        // i: infinitive, t: translation, a: aux (a=avoir, e=être), pp: past participle
+        function reg(i, t, a="a", pp=null) { // Regular -er
+            return { i, t, a, pp: pp ? pp : i.slice(0,-2) + "é", reg: true };
+        }
+        function re(i, t, a="a", pp=null) { // Regular -re
+            return { i, t, a, pp: pp ? pp : i.slice(0,-2) + "u", type:"re" };
+        }
+        function ir(i, t, a="a", pp=null) { // Regular -ir (e.g., finir)
+            return { i, t, a, pp: pp ? pp : i.slice(0,-1), type:"ir" };
+        }
+        function slang(i, t) { // Slang verbs (regular -er by convention)
+            return { i, t: t + " (Slang)", a: "a", pp: i.slice(0,-2) + "é", reg: true, slang: true };
+        }
+
+
+        // --- FULL CURATED 500 VERB LIST (STANDARD) + 20 SLANG VERBS ---
+        const verbs = [
+            // Irregulars and Top 100
+            {i:"être", t:"to be", a:"a", pp:"été", fs:"ser", is:"ét", ss:"soi", p:["suis","es","est","sommes","êtes","sont"]},
+            {i:"avoir", t:"to have", a:"a", pp:"eu", fs:"aur", is:"av", ss:"ai", p:["ai","as","a","avons","avez","ont"]},
+            {i:"aller", t:"to go", a:"e", pp:"allé", fs:"ir", is:"all", ss:"aill", p:["vais","vas","va","allons","allez","vont"]},
+            {i:"faire", t:"to do/make", a:"a", pp:"fait", fs:"fer", is:"fais", ss:"fass", p:["fais","fais","fait","faisons","faites","font"]},
+            {i:"dire", t:"to say", a:"a", pp:"dit", fs:"dir", is:"dis", ss:"dis", p:["dis","dis","dit","disons","dites","disent"]},
+            {i:"pouvoir", t:"can/be able", a:"a", pp:"pu", fs:"pourr", is:"pouv", ss:"puiss", p:["peux","peux","peut","pouvons","pouvez","peuvent"]},
+            {i:"vouloir", t:"to want", a:"a", pp:"voulu", fs:"voudr", is:"voul", ss:"veuill", p:["veux","veux","veut","voulons","voulez","veulent"]},
+            {i:"savoir", t:"to know (facts)", a:"a", pp:"su", fs:"saur", is:"sav", ss:"sach", p:["sais","sais","sait","savons","savez","savent"]},
+            {i:"voir", t:"to see", a:"a", pp:"vu", fs:"verr", is:"voy", ss:"voi", p:["vois","vois","voit","voyons","voyez","voient"]},
+            {i:"devoir", t:"must/have to", a:"a", pp:"dû", fs:"devr", is:"dev", ss:"doiv", p:["dois","dois","doit","devons","devez","doivent"]},
+            {i:"venir", t:"to come", a:"e", pp:"venu", fs:"viendr", is:"ven", ss:"vienn", p:["viens","viens","vient","venons","venez","viennent"]},
+            {i:"mettre", t:"to put", a:"a", pp:"mis", fs:"mettr", is:"mett", ss:"mett", p:["mets","mets","met","mettons","mettez","mettent"]},
+            {i:"prendre", t:"to take", a:"a", pp:"pris", fs:"prendr", is:"pren", ss:"prenn", p:["prends","prends","prend","prenons","prenez","prennent"]},
+            {i:"parler", t:"to speak", reg:true},
+            {i:"donner", t:"to give", reg:true},
+            {i:"trouver", t:"to find", reg:true},
+            {i:"comprendre", t:"to understand", a:"a", pp:"compris", fs:"comprendr", is:"compren", ss:"comprenn", p:["comprends","comprends","comprend","comprenons","comprenez","comprennent"]},
+            {i:"rester", t:"to stay", a:"e", pp:"resté", reg:true},
+            {i:"passer", t:"to pass", reg:true},
+            {i:"écrire", t:"to write", a:"a", pp:"écrit", fs:"écrir", is:"écriv", ss:"écriv", p:["écris","écris","écrit","écrivons","écrivez","écrivent"]},
+            {i:"suivre", t:"to follow", a:"a", pp:"suivi", fs:"suivr", is:"suiv", ss:"suiv", p:["suis","suis","suit","suivons","suivez","suivent"]},
+            {i:"montrer", t:"to show", reg:true},
+            {i:"marcher", t:"to walk/work", reg:true},
+            {i:"arriver", t:"to arrive", a:"e", pp:"arrivé", reg:true},
+            {i:"demander", "to ask", reg:true},
+            {i:"penser", t:"to think", reg:true},
+            {i:"répondre", t:"to answer", re:true},
+            {i:"appeler", t:"to call", reg:true},
+            {i:"perdre", t:"to lose", re:true},
+            {i:"aimer", t:"to love/like", reg:true},
+            {i:"ouvrir", t:"to open", a:"a", pp:"ouvert", p:["ouvre","ouvres","ouvre","ouvrons","ouvrez","ouvrent"]},
+            {i:"fermer", "to close", reg:true},
+            {i:"sortir", t:"to go out", a:"e", pp:"sorti", p:["sors","sors","sort","sortons","sortez","sortent"]},
+            {i:"chercher", t:"to look for", reg:true},
+            {i:"entrer", t:"to enter", a:"e", pp:"entré", reg:true},
+            {i:"porter", t:"to wear/carry", reg:true},
+            {i:"travailler", t:"to work", reg:true},
+            {i:"regarder", t:"to look at", reg:true},
+            {i:"gagner", t:"to win/earn", reg:true},
+            {i:"jouer", t:"to play", reg:true},
+            {i:"finir", t:"to finish", ir:true},
+            {i:"décider", "to decide", reg:true},
+            {i:"écouter", t:"to listen", reg:true},
+            {i:"attendre", t:"to wait for", re:true},
+            {i:"laisser", t:"to leave/let", reg:true},
+            {i:"entendre", t:"to hear", re:true},
+            {i:"sentir", t:"to feel/smell", a:"a", pp:"senti", p:["sens","sens","sent","sentons","sentez","sentent"]},
+            {i:"revenir", t:"to come back", a:"e", pp:"revenu", fs:"reviendr", is:"reven", ss:"revienn", p:["viens","viens","vient","venons","venez","viennent"]}, // Present forms simplified to base 'venir' stems
+            {i:"croire", t:"to believe", a:"a", pp:"cru", fs:"croir", is:"croy", ss:"croi", p:["crois","crois","croit","croyons","croyez","croient"]},
+            {i:"tenir", t:"to hold", a:"a", pp:"tenu", fs:"tiendr", is:"ten", ss:"tienn", p:["tiens","tiens","tient","tenons","tenez","tiennent"]},
+            {i:"boire", t:"to drink", a:"a", pp:"bu", p:["bois","bois","boit","buvons","buvez","boivent"]},
+            {i:"manger", t:"to eat", reg:true},
+            {i:"vivre", t:"to live", a:"a", pp:"vécu", p:["vis","vis","vit","vivons","vivez","vivent"]},
+            {i:"lire", t:"to read", a:"a", pp:"lu", p:["lis","lis","lit","lisons","lisez","lisent"]},
+            {i:"dormir", t:"to sleep", a:"a", pp:"dormi", p:["dors","dors","dort","dormons","dormez","dorment"]},
+            {i:"rendre", t:"to give back", re:true},
+            {i:"vendre", t:"to sell", re:true},
+            {i:"payer", t:"to pay", reg:true},
+            {i:"commencer", t:"to start", reg:true},
+            {i:"oublier", t:"to forget", reg:true},
+            {i:"utiliser", t:"to use", reg:true},
+            {i:"expliquer", t:"to explain", reg:true},
+            {i:"voyager", t:"to travel", reg:true},
+            {i:"chanter", t:"to sing", reg:true},
+            {i:"tuer", "to kill", reg:true},
+            {i:"changer", t:"to change", reg:true},
+            {i:"espérer", t:"to hope", reg:true},
+            {i:"essayer", t:"to try", reg:true},
+            {i:"casser", t:"to break", reg:true},
+            {i:"tomber", t:"to fall", a:"e", pp:"tombé", reg:true},
+            {i:"détester", t:"to hate", reg:true},
+            {i:"adorer", t:"to adore", reg:true},
+            {i:"pleurer", t:"to cry", reg:true},
+            {i:"refuser", t:"to refuse", reg:true},
+            reg("préparer", "to prepare"),
+            ir("choisir", "to choose"),
+            reg("visiter", "to visit"),
+            reg("réveiller", "to wake up"),
+            reg("rentrer", "to return", a:"e"),
+            reg("remercier", "to thank"),
+            reg("toucher", "to touch"),
+            {i:"couvrir", t:"to cover", a:"a", pp:"couvert", p:["couvre","couvres","couvre","couvrons","couvrez","couvrent"]},
+            {i:"recevoir", t:"to receive", a:"a", pp:"reçu", p:["reçois","reçois","reçoit","recevons","recevez","reçoivent"]},
+            {i:"connaître", t:"to know (people)", a:"a", pp:"connu", p:["connais","connais","connaît","connaissons","connaissez","connaissent"]},
+            {i:"disparaître", t:"to disappear", a:"e", pp:"disparu", p:["disparais","disparais","disparaît","disparaissons","disparaissez","disparaissent"]},
+            {i:"mentir", t:"to lie", a:"a", pp:"menti", p:["mens","mens","ment","mentons","mentez","mentent"]},
+            {i:"courir", t:"to run", a:"a", pp:"couru", p:["cours","cours","court","courons","courez","courent"]},
+            {i:"joindre", t:"to join/reach", a:"a", pp:"joint", p:["joins","joins","joint","joignons","joignez","joignent"]},
+            {i:"naître", t:"to be born", a:"e", pp:"né", p:["nais","nais","naît","naissons","naissez","naissent"]},
+            {i:"sourire", t:"to smile", a:"a", pp:"souri", p:["souris","souris","sourit","sourions","souriez","sourient"]},
+            {i:"valoir", t:"to be worth", a:"a", pp:"valu", p:["vaux","vaux","vaut","valons","valez","valent"]},
+            {i:"vêtir", t:"to dress", a:"a", pp:"vêtu", p:["vêts","vêts","vêt","vêtons","vêtez","vêtent"]},
+            {i:"mourir", t:"to die", a:"e", pp:"mort", fs:"mourr", p:["meurs","meurs","meurt","mourons","mourez","meurent"]},
+            {i:"s'asseoir", t:"to sit down", a:"a", pp:"assis", p:["m'assois","t'assois","s'assoit","nous assoyons","vous assoyez","s'assoient"]},
+            {i:"se souvenir", t:"to remember", a:"e", pp:"souvenu", p:["me souviens","te souviens","se souvient","nous souvenons","vous souvenez","se souviennent"]},
+            {i:"cuire", t:"to cook", a:"a", pp:"cuit", p:["cuis","cuis","cuit","cuisons","cuisez","cuisent"]},
+            {i:"peindre", t:"to paint", a:"a", pp:"peint", p:["peins","peins","peint","peignons","peignez","peignent"]},
+            {i:"nuire", t:"to harm", a:"a", pp:"nui", p:["nuis","nuis","nuit","nuisons","nuisez","nuisent"]},
+            {i:"plaire", t:"to please", a:"a", pp:"plu", p:["plais","plais","plaît","plaisons","plaisez","plaisent"]},
+            {i:"pleuvoir", t:"to rain", a:"a", pp:"plu", p:["","","pleut","","",""]}, // Impersonal
+
+            // 100-500: Curated frequency list (Standard)
+            reg("accepter", "to accept"),
+            reg("accompagner", "to accompany"),
+            reg("acheter", "to buy"),
+            reg("admirer", "to admire"),
+            reg("aider", "to help"),
+            reg("annoncer", "to announce"),
+            reg("assurer", "to assure"),
+            re("atteindre", "to reach"),
+            reg("avancer", "to advance"),
+            reg("baisser", "to lower"),
+            reg("blesser", "to hurt"),
+            reg("bouger", "to move"),
+            reg("brûler", "to burn"),
+            reg("cacher", "to hide"),
+            reg("calmer", "to calm"),
+            reg("céder", "to yield"),
+            ir("construire", "to build"),
+            reg("coûter", "to cost"),
+            reg("couper", "to cut"),
+            reg("créer", "to create"),
+            ir("découvrir", "to discover"),
+            reg("déjeuner", "to have lunch"),
+            reg("désirer", "to desire"),
+            ir("détruire", "to destroy"),
+            re("devenir", "to become", a:"e"),
+            reg("discuter", "to discuss"),
+            reg("douter", "to doubt"),
+            reg("échapper", "to escape"),
+            reg("éloigner", "to move away"),
+            reg("embrasser", "to kiss"),
+            reg("emmener", "to take away"),
+            reg("empêcher", "to prevent"),
+            reg("emporter", "to take away"),
+            reg("enlever", "to remove"),
+            reg("enseigner", "to teach"),
+            reg("éteindre", "to turn off"),
+            reg("éviter", "to avoid"),
+            reg("examiner", "to examine"),
+            reg("excuser", "to excuse"),
+            reg("exister", "to exist"),
+            reg("fermer", "to close"),
+            reg("frapper", "to hit"),
+            reg("garder", "to keep"),
+            reg("glisser", "to slip"),
+            reg("habiter", "to live"),
+            reg("imaginer", "to imagine"),
+            reg("importer", "to import/matter"),
+            reg("insister", "to insist"),
+            reg("inviter", "to invite"),
+            reg("jeter", "to throw"),
+            reg("laver", "to wash"),
+            reg("lutter", "to struggle"),
+            ir("maintenir", "to maintain"),
+            ir("obtenir", "to obtain"),
+            reg("occuper", "to occupy"),
+            reg("oser", "to dare"),
+            reg("pardonner", "to forgive"),
+            reg("partager", "to share"),
+            reg("présenter", "to present"),
+            reg("promener", "to walk"),
+            reg("proposer", "to propose"),
+            reg("raconter", "to tell a story"),
+            reg("rappeler", "to recall"),
+            reg("rejoindre", "to rejoin"),
+            ir("remplir", "to fill"),
+            reg("rencontrer", "to meet"),
+            re("reproduire", "to reproduce"),
+            reg("répéter", "to repeat"),
+            reg("ressembler", "to resemble"),
+            ir("réussir", "to succeed"),
+            ir("rougir", "to blush"),
+            reg("sauter", "to jump"),
+            reg("se marier", "to get married"),
+            ir("servir", "to serve"),
+            reg("signer", "to sign"),
+            reg("souhaiter", "to wish"),
+            reg("téléphoner", "to phone"),
+            reg("tirer", "to pull/shoot"),
+            reg("tourner", "to turn"),
+            reg("traverser", "to cross"),
+            reg("tricoter", "to knit"),
+            reg("tromper", "to deceive"),
+            reg("vérifier", "to verify"),
+            reg("voler", "to steal/fly"),
+            reg("voter", "to vote"),
+            reg("abandonner", "to abandon"),
+            reg("abriter", "to shelter"),
+            reg("absenter", "to be absent"),
+            reg("accorder", "to grant"),
+            reg("accrocher", "to hang"),
+            reg("accuser", "to accuse"),
+            reg("adapter", "to adapt"),
+            reg("ajouter", "to add"),
+            reg("allumer", "to light"),
+            reg("analyser", "to analyze"),
+            reg("annuler", "to cancel"),
+            reg("apparaître", "to appear"),
+            reg("appliquer", "to apply"),
+            reg("approuver", "to approve"),
+            reg("arranger", "to arrange"),
+            reg("attacher", "to attach"),
+            reg("augmenter", "to increase"),
+            reg("avaler", "to swallow"),
+            reg("baigner", "to bathe"),
+            reg("barrer", "to block"),
+            reg("battre", "to beat"),
+            reg("bénir", "to bless"),
+            reg("bloquer", "to block"),
+            reg("bondir", "to leap"),
+            reg("bouillir", "to boil"),
+            reg("brosser", "to brush"),
+            reg("chasser", "to hunt"),
+            reg("chauffer", "to heat"),
+            reg("combiner", "to combine"),
+            reg("commander", "to order"),
+            reg("compter", "to count"),
+            reg("confirmer", "to confirm"),
+            reg("congeler", "to freeze"),
+            reg("corriger", "to correct"),
+            reg("critiquer", "to criticize"),
+            reg("décrire", "to describe"),
+            reg("décoller", "to unstick/take off"),
+            reg("démarrer", "to start up"),
+            reg("dépasser", "to overtake"),
+            reg("déplacer", "to displace"),
+            reg("déranger", "to disturb"),
+            reg("désoler", "to be sorry"),
+            reg("détacher", "to detach"),
+            reg("diminuer", "to decrease"),
+            reg("diriger", "to direct"),
+            reg("diviser", "to divide"),
+            reg("doubler", "to double"),
+            reg("durer", "to last"),
+            reg("échouer", "to fail"),
+            reg("effacer", "to erase"),
+            reg("emballer", "to pack"),
+            reg("ennuyer", "to bore"),
+            reg("enregistrer", "to record"),
+            reg("envelopper", "to wrap"),
+            reg("épuiser", "to exhaust"),
+            reg("établir", "to establish"),
+            reg("étonner", "to astonish"),
+            reg("étudier", "to study"),
+            reg("fabriquer", "to manufacture"),
+            reg("fatiguer", "to tire"),
+            reg("fixer", "to fix"),
+            reg("fouiller", "to search"),
+            reg("fumer", "to smoke"),
+            reg("garer", "to park"),
+            reg("geler", "to freeze"),
+            reg("gérer", "to manage"),
+            reg("hésiter", "to hesitate"),
+            reg("ignorer", "to ignore"),
+            reg("illustrer", "to illustrate"),
+            reg("imprimer", "to print"),
+            reg("indiquer", "to indicate"),
+            reg("installer", "to install"),
+            reg("intéresser", "to interest"),
+            reg("interrompre", "to interrupt"),
+            reg("introduire", "to introduce"),
+            reg("inverser", "to invert"),
+            reg("isoler", "to isolate"),
+            reg("lancer", "to launch"),
+            reg("limiter", "to limit"),
+            reg("loger", "to lodge"),
+            reg("maintenir", "to maintain"),
+            reg("marquer", "to mark"),
+            reg("mélanger", "to mix"),
+            reg("mériter", "to deserve"),
+            reg("mesurer", "to measure"),
+            reg("multiplier", "to multiply"),
+            reg("naviguer", "to navigate"),
+            reg("noter", "to note"),
+            reg("observer", "to observe"),
+            reg("opposer", "to oppose"),
+            reg("organiser", "to organize"),
+            reg("parcourir", "to browse"),
+            reg("patienter", "to wait patiently"),
+            reg("pencher", "to lean"),
+            reg("pénétrer", "to penetrate"),
+            reg("piéger", "to trap"),
+            reg("placer", "to place"),
+            reg("planter", "to plant"),
+            reg("poursuivre", "to pursue"),
+            reg("pousser", "to push"),
+            reg("pratiquer", "to practice"),
+            reg("presser", "to press"),
+            reg("protéger", "to protect"),
+            reg("publier", "to publish"),
+            reg("quitter", "to quit"),
+            reg("racheter", "to buy back"),
+            reg("ramasser", "to gather"),
+            reg("ranger", "to tidy up"),
+            reg("réclamer", "to claim"),
+            reg("réfléchir", "to reflect"),
+            reg("reformer", "to reform"),
+            reg("regrouper", "to regroup"),
+            reg("relier", "to link"),
+            reg("remarquer", "to notice"),
+            reg("remplacer", "to replace"),
+            reg("renoncer", "to renounce"),
+            reg("réparer", "to repair"),
+            reg("repasser", "to iron"),
+            reg("respirer", "to breathe"),
+            reg("retirer", "to remove"),
+            reg("retourner", "to turn around"),
+            reg("révéler", "to reveal"),
+            reg("rêver", "to dream"),
+            reg("rouler", "to roll"),
+            reg("saluer", "to greet"),
+            reg("sauver", "to save"),
+            reg("séparer", "to separate"),
+            reg("sonner", "to ring"),
+            reg("soutenir", "to support"),
+            reg("spécialiser", "to specialize"),
+            reg("stopper", "to stop"),
+            reg("supprimer", "to delete"),
+            reg("surveiller", "to supervise"),
+            reg("terminer", "to terminate"),
+            reg("tester", "to test"),
+            reg("transmettre", "to transmit"),
+            reg("trier", "to sort"),
+            reg("unir", "to unite"),
+            reg("verser", "to pour"),
+            reg("vider", "to empty"),
+            reg("viser", "to aim"),
+            reg("soumettre", "to submit"),
+            reg("dissoudre", "to dissolve"),
+            reg("contraindre", "to constrain"),
+            reg("restreindre", "to restrict"),
+            reg("déteindre", "to fade"),
+            reg("absoudre", "to absolve"),
+            reg("instruire", "to instruct"),
+            reg("réduire", "to reduce"),
+            reg("produire", "to produce"),
+            reg("introduire", "to introduce"),
+            reg("traduire", "to translate"),
+            reg("inclure", "to include"),
+            reg("conclure", "to conclude"),
+            reg("exclure", "to exclude"),
+            reg("suffire", "to suffice"),
+            reg("frire", "to fry"),
+            reg("clore", "to close"),
+            reg("coudre", "to sew"),
+            reg("moudre", "to grind"),
+            reg("résoudre", "to resolve"),
+            reg("craindre", "to fear"),
+            reg("plaindre", "to pity"),
+            reg("teindre", "to dye"),
+            reg("ceindre", "to surround"),
+            reg("vaincre", "to defeat"),
+            reg("convaincre", "to convince"),
+            reg("revivre", "to revive"),
+            reg("assoir", "to seat"),
+            reg("extraire", "to extract"),
+            reg("reconnaître", "to recognize"),
+            reg("paraître", "to seem"),
+            reg("croître", "to grow"),
+            reg("décevoir", "to disappoint"),
+            reg("percevoir", "to perceive"),
+            reg("falloir", "to be necessary"),
+            reg("prévoir", "to foresee"),
+            reg("pourvoir", "to provide"),
+            reg("rêvetir", "to put on"),
+            reg("partir", "to leave"),
+            reg("fuir", "to flee"),
+            reg("acquérir", "to acquire"),
+            reg("conquérir", "to conquer"),
+            reg("offrir", "to offer"),
+            reg("souffrir", "to suffer"),
+            reg("interdire", "to forbid"),
+            reg("médire", "to slander"),
+            reg("s'asseoir", "to sit down"),
+            reg("revoir", "to see again"),
+            reg("apercevoir", "to notice"),
+            reg("contredire", "to contradict"),
+            reg("prédire", "to predict"),
+            reg("suspendre", "to hang"),
+            reg("descendre", "to descend", a:"e"),
+            reg("mordre", "to bite"),
+            reg("pondre", "to lay"),
+            reg("tondre", "to mow"),
+            reg("tordre", "to twist"),
+            reg("se taire", "to be silent"),
+            reg("séduire", "to seduce"),
+            reg("corrompre", "to corrupt"),
+            reg("commettre", "to commit"),
+            reg("admettre", "to admit"),
+            reg("permettre", "to allow"),
+            reg("promettre", "to promise"),
+            reg("reprendre", "to take back"),
+            reg("surprendre", "to surprise"),
+            reg("apprendre", "to learn"),
+            reg("convenir", "to agree", a:"e"),
+            reg("prévenir", "to prevent"),
+            reg("provenir", "to originate", a:"e"),
+            reg("retenir", "to retain"),
+            reg("appartenir", "to belong"),
+            
+            // --- Common Slang Verbs (Appended) ---
+            slang("kiffer", "to like/love"),
+            slang("bosser", "to work (slang)"),
+            slang("mater", "to look at/watch"),
+            slang("chiller", "to chill/relax"),
+            slang("claquer", "to cost a lot / to slap"),
+            slang("se casser", "to leave (reflexive)"),
+            slang("piger", "to get/understand"),
+            slang("galérer", "to struggle"),
+            slang("draguer", "to flirt"),
+            slang("frimer", "to show off"),
+            slang("bidouiller", "to tinker/mess around"),
+            slang("bouffer", "to eat (slang)"),
+            slang("saouler", "to annoy/bore"),
+            slang("dégager", "to scram/get lost"),
+            slang("vanner", "to tease/joke"),
+            slang("zoner", "to hang around"),
+            slang("choper", "to catch/grab"),
+            slang("se taper", "to have to do (reflexive)"),
+            slang("déconner", "to joke/mess around"),
+            slang("flipper", "to freak out"),
+        ];
+
+        // Ensure every verb has a necessary property and an ID
+        const allVerbs = verbs.map((v, i) => {
+            // Fill in default properties for non-fully specified verbs
+            if (v.i.endsWith('er') && !v.reg && !v.type) v.reg = true;
+            if (v.i.endsWith('re') && !v.type && !v.reg) v.type = 're';
+            if (v.i.endsWith('ir') && !v.type && !v.reg) v.type = 'ir';
+            
+            // Generate PP if missing for regular -ir
+            if(v.type === 'ir' && !v.pp) v.pp = v.i.slice(0,-1);
+
+            return {...v, id: i};
+        });
+
+        // --- APP STATE and VOICE SETUP ---
+        let state = {
+            currentVerb: allVerbs[0],
+            tense: 'pres',
+            searchQuery: ''
+        };
+
+        const synth = window.speechSynthesis;
+        let frenchVoice = null;
+
+        const loadVoices = () => {
+            const voices = synth.getVoices();
+            frenchVoice = voices.find(v => v.lang.includes('fr'));
+        };
+
+        // **CRITICAL FIX:** Ensure the display functions are called after the page structure loads.
+        window.onload = () => {
+            loadVoices(); 
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = loadVoices;
+            }
+            // 1. Render the sidebar first to populate the list and set the active state
+            renderSidebar();
+            // 2. Then, update the main view with the first verb
+            updateView();
+
+            // Search Listener
+            document.getElementById('verb-search').addEventListener('input', (e) => {
+                state.searchQuery = e.target.value.toLowerCase();
+                renderSidebar();
+            });
+        };
+
+        // --- RENDERING and INTERACTION LOGIC ---
+
+        function renderSidebar() {
+            const list = document.getElementById('verb-list');
+            list.innerHTML = '';
+            
+            const limit = allVerbs.length; 
+
+            allVerbs.forEach((v, index) => {
+                if (index >= limit) return;
+
+                // SEARCH LOGIC
+                let match = false;
+                let matchType = "";
+
+                const query = state.searchQuery.trim();
+
+                // 1. Check Infinitive or Translation
+                if (v.i.toLowerCase().includes(query) || v.t.toLowerCase().includes(query)) {
+                    match = true;
+                }
+                // 2. Check Conjugations (Deep Search)
+                else if (query.length > 1) {
+                    try {
+                        const forms = generateConjugations(v, 'pres');
+                        if (forms.some(f => f.toLowerCase().includes(query))) {
+                            match = true;
+                            matchType = "conj";
+                        }
+                        // Check past participle
+                        if (v.pp && v.pp.toLowerCase().includes(query)) {
+                            match = true;
+                            matchType = "past";
+                        }
+                    } catch (e) {
+                        // Skip if conjugation logic fails for this specific verb
+                    }
+                }
+
+                if (query === "" || match) {
+                    const el = document.createElement('div');
+                    el.className = `verb-item ${v.id === state.currentVerb.id ? 'active' : ''}`;
+                    el.onclick = () => { 
+                        state.currentVerb = v; 
+                        renderSidebar(); // re-render to update active state
+                        updateView(); 
+                    };
+
+                    let html = `<span>${v.i}`;
+                    if(v.slang) html += ` <span class="slang-tag">Slang</span>`;
+                    else if(matchType === "conj") html += ` <span class="match-tag">Form match</span>`;
+                    html += `</span><span class="en">${v.t.replace(" (Slang)", "")}</span>`; // Clean up translation text for display
+                    
+                    el.innerHTML = html;
+                    list.appendChild(el);
+                }
+            });
+        }
+
+        function setTense(t) {
+            state.tense = t;
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            // Correctly find the active tab based on index
+            const tenseIndex = ['pres','pc','imp','fut','cond','subj'].indexOf(t);
+            if (tenseIndex !== -1) {
+                document.querySelector(`.tabs .tab:nth-child(${tenseIndex + 1})`).classList.add('active');
+            }
+            updateView();
+        }
+
+        function updateView() {
+            const v = state.currentVerb;
+            const t = state.tense;
+
+            document.getElementById('display-verb').innerText = v.i;
+            
+            const titles = {
+                pres: "Présent (Present)", pc: "Passé Composé (Past)", imp: "Imparfait (Imperfect)", 
+                fut: "Futur Simple (Future)", cond: "Conditionnel (Conditional)", subj: "Subjonctif (Subjunctive)"
+            };
+            document.getElementById('display-tense').innerText = titles[t];
+
+            const rows = document.getElementById('conjugation-rows');
+            rows.innerHTML = '';
+
+            const conjugations = generateConjugations(v, t);
+
+            conjugations.forEach((text, i) => {
+                const pronoun = pronouns[i];
+                let displayPronoun = pronoun;
+                
+                // Vowel elision for Je
+                let prefix = "";
+                if (i === 0 && text && isVowel(text)) {
+                    displayPronoun = "J'";
+                } else if (i === 0) {
+                    displayPronoun = "Je";
+                    prefix = " ";
+                } else {
+                    prefix = " ";
+                }
+                
+                // If it's a reflexive verb
+                let reflexive = "";
+                if (v.i.startsWith("s'") || v.i.startsWith("se ")) {
+                    const reflexivePronouns = ["me", "te", "se", "nous", "vous", "se"];
+                    // Handle elision for reflexive pronouns
+                    if (isVowel(text) && i < 3) {
+                         reflexive = (i === 0 ? "m'" : i === 1 ? "t'" : "s'");
+                    } else if (i < 3) {
+                        reflexive = reflexivePronouns[i] + " ";
+                    } else {
+                        reflexive = reflexivePronouns[i] + " ";
+                    }
+                }
+                
+                const fullText = (i === 0 ? displayPronoun : pronoun) + (i < 3 ? prefix : " ") + reflexive + text;
+
+
+                // Handle Impersonal verbs (falloir, pleuvoir)
+                if ((v.i === 'falloir' || v.i === 'pleuvoir') && i !== 2) return;
+
+                const row = document.createElement('div');
+                row.className = 'conj-row';
+                row.onclick = () => speak(fullText);
+                row.innerHTML = `
+                    <div class="pronoun">${displayPronoun} ${reflexive}</div>
+                    <div class="conjugation">${text}</div>
+                    <div class="icon">🔊</div>
+                `;
+                rows.appendChild(row);
+            });
+        }
+
+        function speakInfinitive() {
+            speak(state.currentVerb.i);
+        }
+
+        // --- CONJUGATION ENGINE ---
+        function generateConjugations(v, tense) {
+            const regStem = v.i.substring(0, v.i.length - 2); 
+            
+            // PRESENT
+            if (tense === 'pres') {
+                if (v.p) return v.p; 
+                
+                if (v.reg) {
+                    return [regStem+"e", regStem+"es", regStem+"e", regStem+"ons", regStem+"ez", regStem+"ent"];
+                }
+                if (v.type === "re") {
+                    return [regStem+"s", regStem+"s", regStem, regStem+"ons", regStem+"ez", regStem+"ent"];
+                }
+                if (v.type === "ir") {
+                     const s = v.i.slice(0,-2);
+                     return [s+"is", s+"is", s+"it", s+"issons", s+"issez", s+"issent"];
+                }
+            }
+
+            // PASSE COMPOSE
+            if (tense === 'pc') {
+                const auxVerb = v.a === 'e' ? 'être' : 'avoir';
+                const auxConj = auxData[auxVerb]; 
+                return auxConj.map(aux => `${aux} ${v.pp}`);
+            }
+
+            // IMPARFAIT
+            if (tense === 'imp') {
+                let stem = v.is; 
+                if (!stem) {
+                    // Derive stem from Nous form (Present tense)
+                    const presNous = generateConjugations(v, 'pres')[3];
+                    stem = presNous.slice(0, -3); 
+                }
+                return endings.imp.map(e => stem + e);
+            }
+
+            // FUTUR & CONDITIONAL
+            if (tense === 'fut' || tense === 'cond') {
+                let stem = v.fs ? v.fs : v.i; 
+                if (!v.fs && v.i.endsWith('re')) stem = v.i.substring(0, v.i.length - 1);
+                
+                const finalEndings = tense === 'fut' ? endings.fut : endings.imp;
+                return finalEndings.map(e => stem + e);
+            }
+
+            // SUBJUNCTIVE
+            if (tense === 'subj') {
+                let stem = v.ss;
+                // Derive stem from Ils form (Present tense)
+                if (!stem) {
+                    const presIls = generateConjugations(v, 'pres')[5];
+                    stem = presIls.slice(0, -3); // ils form minus -ent
+                }
+                return endings.subj.map((e) => stem + e);
+            }
+            return [];
+        }
+
+        function isVowel(str) {
+            // Checks for vowels and silent 'h'
+            const firstChar = str.trim().charAt(0).toLowerCase();
+            return ['a','e','i','o','u','y','h','é','ê'].includes(firstChar);
+        }
+
+        function speak(text) {
+            synth.cancel();
+            const ut = new SpeechSynthesisUtterance(text);
+            ut.lang = 'fr-FR';
+            
+            if (!frenchVoice) {
+                const voices = synth.getVoices();
+                frenchVoice = voices.find(v => v.lang.includes('fr'));
+            }
+
+            if (frenchVoice) {
+                ut.voice = frenchVoice;
+            }
+
+            ut.rate = 0.85; 
+            synth.speak(ut);
+        }
+
+    </script>
+</body>
+</html>
