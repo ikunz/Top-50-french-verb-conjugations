@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>French Verb Studio (External Data)</title>
+    <style>
+        /* ... (Your original CSS remains the same) ... */
+        :root {
+            --primary: #4f46e5;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+            --highlight: #fef3c7;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR (Verbs) */
+        .sidebar {
+            width: 300px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            z-index: 2;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .sidebar-header h1 { margin: 0; font-size: 1.2rem; }
+        .sidebar-header p { margin: 5px 0 0; opacity: 0.8; font-size: 0.8rem; }
+
+        .search-container {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            background: #f1f5f9;
+        }
+
+        #verb-search {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .verb-list {
+            overflow-y: auto;
+            flex: 1;
+            padding: 5px;
+        }
+
+        .verb-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 6px;
+            margin-bottom: 2px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            transition: all 0.1s;
+            font-size: 0.95rem;
+        }
+
+        .verb-item:hover { background: #eff6ff; color: var(--primary); }
+        .verb-item.active { background: var(--primary); color: white; }
+        .verb-item span.en { font-weight: 400; opacity: 0.7; font-size: 0.85em; text-align: right; }
+
+        /* MAIN CONTENT */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            background: #e0e7ff;
+            padding: 0 20px;
+            overflow-x: auto;
+            flex-shrink: 0;
+            box-shadow: inset 0 -1px 0 rgba(0,0,0,0.05);
+        }
+
+        .tab {
+            padding: 15px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #64748b;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .tab:hover { color: var(--primary); background: rgba(255,255,255,0.3); }
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); background: rgba(255,255,255,0.5); }
+
+        /* CONTENT AREA */
+        .content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+            height: fit-content;
+            margin-bottom: 40px;
+        }
+
+        .card-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--bg);
+            padding-bottom: 20px;
+        }
+
+        .verb-infinitive-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 5px;
+        }
+
+        .big-verb { 
+            font-size: 2.8rem; 
+            color: var(--primary); 
+            font-weight: 800; 
+            margin: 0; 
+            line-height: 1;
+        }
+
+        .infinitive-speaker {
+            font-size: 1.5rem;
+            color: var(--primary);
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #e0e7ff;
+            transition: transform 0.1s, background 0.2s;
+        }
+
+        .infinitive-speaker:hover { background: #c7d2fe; transform: scale(1.05); }
+        .infinitive-speaker:active { transform: scale(0.95); }
+
+        .tense-label { 
+            color: #64748b; 
+            font-weight: 600; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            font-size: 0.9rem; 
+            margin-top: 10px;
+        }
+
+        /* CONJUGATION ROWS */
+        .conj-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: 0.1s;
+            border-radius: 8px;
+        }
+
+        .conj-row:last-child { border-bottom: none; }
+        .conj-row:hover { background-color: #f0fdf4; transform: translateX(5px); }
+        
+        .pronoun { width: 100px; font-weight: bold; color: #94a3b8; font-size: 0.95rem; }
+        .conjugation { font-size: 1.25rem; font-weight: 600; color: var(--text); flex: 1; }
+        .icon { opacity: 0; color: var(--primary); transition: 0.2s; }
+        .conj-row:hover .icon { opacity: 1; }
+
+        /* Search Match Highlight */
+        .match-tag {
+            font-size: 0.7rem;
+            background: var(--highlight);
+            color: #b45309;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+            border: 1px solid #fcd34d;
+        }
+        
+        /* Slang Tag */
+        .slang-tag {
+            font-size: 0.7rem;
+            background: #ffedd5;
+            color: #c2410c;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+            border: 1px solid #f97316;
+        }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: 35%; border-right: none; border-bottom: 1px solid var(--border); }
+            .content { padding: 15px; height: 65%; }
+            .big-verb { font-size: 2rem; }
+            .card { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>🇫🇷 Verb Studio (External Data)</h1>
+            <p>Loading conjugations from `french-verbs-lefff.json`</p>
+        </div>
+        <div class="search-container">
+            <input type="text" id="verb-search" placeholder="Search (e.g. eat, être, suis)...">
+        </div>
+        <div class="verb-list" id="verb-list">
+            <p id="loading-message" style="padding: 20px; text-align: center; color: #64748b;">Loading verbs... This may take a moment for large files.</p>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="tabs" id="tabs">
+            <div class="tab active" onclick="setTense('pres')">Présent</div>
+            <div class="tab" onclick="setTense('pc')">Passé Composé</div>
+            <div class="tab" onclick="setTense('imp')">Imparfait</div>
+            <div class="tab" onclick="setTense('fut')">Futur</div>
+            <div class="tab" onclick="setTense('cond')">Conditionnel</div>
+            <div class="tab" onclick="setTense('subj')">Subjonctif</div>
+        </div>
+
+        <div class="content">
+            <div class="card" id="card">
+                <div class="card-header">
+                    <div class="verb-infinitive-area">
+                        <h2 class="big-verb" id="display-verb">...</h2>
+                        <div class="infinitive-speaker" id="infinitive-speaker" onclick="speakInfinitive()" title="Pronounce Infinitive">
+                            🔊
+                        </div>
+                    </div>
+                    <div class="tense-label" id="display-tense">Present Indicative</div>
+                </div>
+                <div id="conjugation-rows">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- GLOBAL STATE & CONSTANTS ---
+        const FILENAME = 'french-verbs-lefff.json';
+        const pronouns = ["Je", "Tu", "Il/Elle", "Nous", "Vous", "Ils/Elles"];
+        
+        let allVerbs = []; // This will be populated asynchronously
+        let state = {
+            currentVerb: null,
+            tense: 'pres',
+            searchQuery: ''
+        };
+
+        const synth = window.speechSynthesis;
+        let frenchVoice = null;
+
+        // Map the complex JSON structure keys to your simple app keys
+        const TENSE_MAP = {
+            'PRESENT': 'pres',
+            'PASSE_COMPOSE': 'pc', // NOTE: You may need to verify this key in your actual file
+            'IMPARFAIT': 'imp',
+            'FUTUR': 'fut',
+            'CONDITIONNEL': 'cond',
+            'SUBJONCTIF': 'subj',
+        };
+
+        // --- DATA PROCESSING ---
+        
+        /**
+         * Converts the raw, nested JSON object into a flattened array 
+         * suitable for your application state.
+         * @param {Object} rawData - The raw JSON object loaded from the file.
+         * @returns {Array} Array of verb objects in the format: {i: 'verb', t: '?', c: {pres: [], ...}}
+         */
+        function processRawVerbData(rawData) {
+            const processedVerbs = [];
+            let verbId = 0;
+            
+            for (const infinitive in rawData) {
+                const rawVerb = rawData[infinitive];
+                const c = {};
+                let hasConjugationData = false;
+                
+                // The main tenses are usually under the INDICATIF and SUBJONCTIF keys
+                const tenses = {
+                    ...rawVerb.INDICATIF,
+                    ...rawVerb.CONDITIONNEL,
+                    ...rawVerb.SUBJONCTIF
+                };
+
+                for (const rawTenseName in tenses) {
+                    const appKey = TENSE_MAP[rawTenseName];
+                    if (appKey) {
+                        c[appKey] = tenses[rawTenseName];
+                        hasConjugationData = true;
+                    }
+                }
+                
+                // Add the verb only if it has relevant conjugation data
+                if (hasConjugationData) {
+                    // NOTE: English translations are NOT in the Lefff file. 
+                    // You would need a separate dictionary file for this, so we default to the infinitive.
+                    processedVerbs.push({
+                        id: verbId++,
+                        i: infinitive,
+                        t: infinitive, // Placeholder: Replace with actual translation if available
+                        aux: 'a', // Placeholder: Conjugation arrays already include the auxiliary
+                        c: c
+                    });
+                }
+            }
+            return processedVerbs;
+        }
+
+        // --- ASYNCHRONOUS INITIALIZATION ---
+
+        const loadVoices = () => {
+            const voices = synth.getVoices();
+            frenchVoice = voices.find(v => v.lang.includes('fr'));
+        };
+        
+        async function initializeApp() {
+            // 1. Load voices
+            loadVoices(); 
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = loadVoices;
+            }
+            
+            // 2. Load and Process Data
+            try {
+                const response = await fetch(FILENAME);
+                if (!response.ok) {
+                    throw new Error(`Failed to load ${FILENAME}: ${response.statusText}`);
+                }
+                const rawData = await response.json();
+                allVerbs = processRawVerbData(rawData);
+                
+                if (allVerbs.length === 0) {
+                    document.getElementById('loading-message').innerText = "Error: File loaded but no verbs were processed.";
+                    return; 
+                }
+
+                state.currentVerb = allVerbs[0]; // Set the first verb
+                
+                // Remove loading message
+                const loadingMessage = document.getElementById('loading-message');
+                if (loadingMessage) loadingMessage.remove();
+
+            } catch (error) {
+                console.error("Data loading error:", error);
+                document.getElementById('loading-message').innerText = `Error: Could not load data from ${FILENAME}. Check the console and file path.`;
+                return;
+            }
+
+            // 3. Render and Set up listeners
+            renderSidebar();
+            updateView();
+
+            document.getElementById('verb-search').addEventListener('input', (e) => {
+                state.searchQuery = e.target.value.toLowerCase();
+                renderSidebar();
+            });
+        }
+
+        window.onload = initializeApp;
+
+        // --- RENDERING and INTERACTION LOGIC ---
+        // These functions remain largely the same, relying on the 'c' object for data.
+
+        function renderSidebar() {
+            const list = document.getElementById('verb-list');
+            list.innerHTML = '';
+            
+            if (allVerbs.length === 0) return;
+
+            const query = state.searchQuery.trim();
+
+            allVerbs.forEach((v) => {
+                let match = false;
+                let matchType = "";
+
+                // 1. Check Infinitive or Translation
+                if (v.i.toLowerCase().includes(query) || v.t.toLowerCase().includes(query)) {
+                    match = true;
+                }
+                // 2. Check Conjugations (Deep Search) - only for longer queries
+                else if (query.length > 1 && v.c && v.c.pres) {
+                    const forms = v.c.pres;
+                    if (forms.some(f => f && f.toLowerCase().includes(query.replace(/j'|m'|t'|s'|il\/elle|ils\/elles/g, '').trim()))) {
+                        match = true;
+                        matchType = "conj";
+                    }
+                }
+
+                if (query === "" || match) {
+                    const el = document.createElement('div');
+                    el.className = `verb-item ${v.id === state.currentVerb.id ? 'active' : ''}`;
+                    el.onclick = () => { 
+                        state.currentVerb = v; 
+                        renderSidebar();
+                        updateView(); 
+                    };
+
+                    let html = `<span>${v.i}`;
+                    // Slang tag is disabled since Lefff data doesn't include slang categorization
+                    // if(v.slang) html += ` <span class="slang-tag">Slang</span>`; 
+                    if(matchType === "conj") html += ` <span class="match-tag">Form match</span>`;
+                    
+                    // Use a more appropriate placeholder if translation is not available
+                    const displayTranslation = v.t !== v.i ? v.t : "Infinitive"; 
+                    html += `</span><span class="en">${displayTranslation}</span>`;
+                    
+                    el.innerHTML = html;
+                    list.appendChild(el);
+                }
+            });
+            
+            if (query !== "" && list.children.length === 0) {
+                list.innerHTML = `<p style="padding: 20px; text-align: center; color: #94a3b8;">No verbs found matching "${query}"</p>`;
+            }
+        }
+
+        function setTense(t) {
+            state.tense = t;
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            const tenseIndex = ['pres','pc','imp','fut','cond','subj'].indexOf(t);
+            if (tenseIndex !== -1) {
+                document.querySelector(`.tabs .tab:nth-child(${tenseIndex + 1})`).classList.add('active');
+            }
+            updateView();
+        }
+
+        function updateView() {
+            const v = state.currentVerb;
+            
+            if (!v || !v.c || !v.c[state.tense]) {
+                document.getElementById('display-verb').innerText = v ? v.i : "Loading...";
+                document.getElementById('conjugation-rows').innerHTML = `<p style="padding: 20px; text-align: center;">Conjugation data not available for this tense or verb.</p>`;
+                return;
+            }
+
+            const t = state.tense;
+
+            document.getElementById('display-verb').innerText = v.i;
+            
+            const titles = {
+                pres: "Présent (Present)", pc: "Passé Composé (Past)", imp: "Imparfait (Imperfect)", 
+                fut: "Futur Simple (Future)", cond: "Conditionnel (Conditional)", subj: "Subjonctif (Subjunctive)"
+            };
+            document.getElementById('display-tense').innerText = titles[t];
+
+            const rows = document.getElementById('conjugation-rows');
+            rows.innerHTML = '';
+
+            const conjugations = v.c[t]; 
+
+            conjugations.forEach((text, i) => {
+                if (!text) return; 
+
+                let pronoun = pronouns[i];
+                let displayPronoun = pronoun;
+                let prefix = " ";
+                
+                // Determine reflexive part based on the actual conjugation text
+                let textParts = text.split(' ');
+                let reflexive = "";
+                
+                // If the verb is reflexive (starts with a reflexive pronoun in the form), 
+                // separate the reflexive pronoun from the conjugation for display.
+                if (textParts.length > 1 && ['m','t','s','nous','vous','se'].includes(textParts[0].replace(/'$/, ''))) {
+                    reflexive = textParts[0] + (textParts[0].endsWith("'") ? "" : " ");
+                    text = textParts.slice(1).join(' ');
+                }
+
+                // Handle Je/J' elision for the main pronoun
+                if (i === 0) {
+                    let firstWord = text.split(' ')[0];
+                    if (isVowel(firstWord)) {
+                        displayPronoun = "J'";
+                        prefix = "";
+                    } else {
+                        displayPronoun = "Je";
+                        prefix = " ";
+                    }
+                } else if (i === 2 || i === 5) { // Il/Elle, Ils/Elles
+                    // Don't add a space between pronoun/reflexive if the next word is already contracted (e.g., 'm'es')
+                    prefix = reflexive.endsWith("'") ? "" : " ";
+                }
+                
+                const row = document.createElement('div');
+                row.className = 'conj-row';
+                // For speaking, combine the parts: Pronoun + Reflexive (if any) + Conjugated Form
+                const speakText = (i === 0 ? displayPronoun : pronoun) + prefix + reflexive + text;
+                row.onclick = () => speak(speakText);
+                
+                // For display, the pronoun column includes the reflexive pronoun for clarity
+                const pronounDisplay = (i === 0 ? displayPronoun : pronoun);
+
+                row.innerHTML = `
+                    <div class="pronoun">${pronounDisplay}${prefix.trim()}${reflexive}</div>
+                    <div class="conjugation">${text}</div>
+                    <div class="icon">🔊</div>
+                `;
+                rows.appendChild(row);
+            });
+        }
+
+        function speakInfinitive() {
+            if (state.currentVerb) {
+                speak(state.currentVerb.i);
+            }
+        }
+
+        function isVowel(str) {
+            const firstChar = str.trim().charAt(0).toLowerCase();
+            return ['a','e','i','o','u','y','h','é','ê'].includes(firstChar);
+        }
+
+        function speak(text) {
+            synth.cancel();
+            const ut = new SpeechSynthesisUtterance(text);
+            ut.lang = 'fr-FR';
+            
+            if (!frenchVoice) {
+                const voices = synth.getVoices();
+                frenchVoice = voices.find(v => v.lang.includes('fr'));
+            }
+
+            if (frenchVoice) {
+                ut.voice = frenchVoice;
+            }
+
+            ut.rate = 0.85; 
+            synth.speak(ut);
+        }
+
+    </script>
+</body>
+</html>
