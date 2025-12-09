@@ -246,7 +246,8 @@
             <input type="text" id="verb-search" placeholder="Search (e.g. eat, être, suis)...">
         </div>
         <div class="verb-list" id="verb-list">
-            </div>
+            <p id="loading-message" style="padding: 20px; text-align: center; color: #64748b;">Loading verbs...</p>
+        </div>
     </div>
 
     <div class="main">
@@ -312,7 +313,7 @@
         const verbs = [
             // Irregulars and Top 100
             {i:"être", t:"to be", a:"a", pp:"été", fs:"ser", is:"ét", ss:"soi", p:["suis","es","est","sommes","êtes","sont"]},
-            {i:"avoir", t:"to have", a:"a", pp:"eu", fs:"aur", is:"av", ss:"ai", p:["ai","as","a","avons","avez","ont"]},
+            {i:"avoir", t:"to have", a:"a", pp:"eu", fs:"aur", is:"av", ss:"ai", p:["ai","as","a",..."avons","avez","ont"]},
             {i:"aller", t:"to go", a:"e", pp:"allé", fs:"ir", is:"all", ss:"aill", p:["vais","vas","va","allons","allez","vont"]},
             {i:"faire", t:"to do/make", a:"a", pp:"fait", fs:"fer", is:"fais", ss:"fass", p:["fais","fais","fait","faisons","faites","font"]},
             {i:"dire", t:"to say", a:"a", pp:"dit", fs:"dir", is:"dis", ss:"dis", p:["dis","dis","dit","disons","dites","disent"]},
@@ -371,7 +372,7 @@
             {i:"payer", t:"to pay", reg:true},
             {i:"commencer", t:"to start", reg:true},
             {i:"oublier", t:"to forget", reg:true},
-            {i:"utiliser", t:"to use", reg:true},
+            {i:"utiliser", "to use", reg:true},
             {i:"expliquer", t:"to explain", reg:true},
             {i:"voyager", t:"to travel", reg:true},
             {i:"chanter", t:"to sing", reg:true},
@@ -750,7 +751,7 @@
 
         // --- APP STATE and VOICE SETUP ---
         let state = {
-            currentVerb: allVerbs[0],
+            currentVerb: allVerbs.length > 0 ? allVerbs[0] : null,
             tense: 'pres',
             searchQuery: ''
         };
@@ -763,23 +764,35 @@
             frenchVoice = voices.find(v => v.lang.includes('fr'));
         };
 
-        // **CRITICAL FIX:** Ensure the display functions are called after the page structure loads.
-        window.onload = () => {
+        const initializeApp = () => {
+            // 1. Load voices for speech
             loadVoices(); 
             if (speechSynthesis.onvoiceschanged !== undefined) {
                 speechSynthesis.onvoiceschanged = loadVoices;
             }
-            // 1. Render the sidebar first to populate the list and set the active state
+
+            // **CRITICAL FIX: Ensure verb data exists before attempting to render.**
+            if (allVerbs.length === 0) {
+                 document.getElementById('loading-message').innerText = "Error: No verb data loaded.";
+                 return; 
+            }
+            
+            // Remove loading message once data is confirmed.
+            const loadingMessage = document.getElementById('loading-message');
+            if (loadingMessage) loadingMessage.remove();
+
+            // 2. Render the sidebar and set up the main view
             renderSidebar();
-            // 2. Then, update the main view with the first verb
             updateView();
 
-            // Search Listener
+            // 3. Set up Search Listener
             document.getElementById('verb-search').addEventListener('input', (e) => {
                 state.searchQuery = e.target.value.toLowerCase();
                 renderSidebar();
             });
         };
+
+        window.onload = initializeApp;
 
         // --- RENDERING and INTERACTION LOGIC ---
 
@@ -787,6 +800,8 @@
             const list = document.getElementById('verb-list');
             list.innerHTML = '';
             
+            if (allVerbs.length === 0) return;
+
             const limit = allVerbs.length; 
 
             allVerbs.forEach((v, index) => {
@@ -802,11 +817,12 @@
                 if (v.i.toLowerCase().includes(query) || v.t.toLowerCase().includes(query)) {
                     match = true;
                 }
-                // 2. Check Conjugations (Deep Search)
+                // 2. Check Conjugations (Deep Search) - only for longer queries
                 else if (query.length > 1) {
                     try {
+                        // Check Present forms (most common search)
                         const forms = generateConjugations(v, 'pres');
-                        if (forms.some(f => f.toLowerCase().includes(query))) {
+                        if (forms.some(f => f && f.toLowerCase().includes(query))) {
                             match = true;
                             matchType = "conj";
                         }
@@ -838,6 +854,25 @@
                     list.appendChild(el);
                 }
             });
+            
+            // If the current verb isn't in the filtered list, set it back to the first one shown
+            if (list.children.length > 0 && !list.querySelector('.active')) {
+                const firstVerbElement = list.children[0];
+                firstVerbElement.classList.add('active');
+                
+                // Find the corresponding verb object and set it as currentVerb
+                const newVerbInfinitive = firstVerbElement.querySelector('span').firstChild.nodeValue.trim();
+                const newCurrentVerb = allVerbs.find(v => v.i === newVerbInfinitive);
+                if (newCurrentVerb) {
+                    state.currentVerb = newCurrentVerb;
+                    updateView();
+                }
+            }
+            
+            // If no search results, add a message
+            if (query !== "" && list.children.length === 0) {
+                list.innerHTML = `<p style="padding: 20px; text-align: center; color: #94a3b8;">No verbs found matching "${query}"</p>`;
+            }
         }
 
         function setTense(t) {
@@ -853,6 +888,13 @@
 
         function updateView() {
             const v = state.currentVerb;
+            
+            if (!v) {
+                document.getElementById('display-verb').innerText = "No Verb Selected";
+                document.getElementById('conjugation-rows').innerHTML = "";
+                return;
+            }
+
             const t = state.tense;
 
             document.getElementById('display-verb').innerText = v.i;
@@ -873,9 +915,10 @@
                 let displayPronoun = pronoun;
                 
                 // Vowel elision for Je
-                let prefix = "";
+                let prefix = " ";
                 if (i === 0 && text && isVowel(text)) {
                     displayPronoun = "J'";
+                    prefix = "";
                 } else if (i === 0) {
                     displayPronoun = "Je";
                     prefix = " ";
@@ -890,6 +933,7 @@
                     // Handle elision for reflexive pronouns
                     if (isVowel(text) && i < 3) {
                          reflexive = (i === 0 ? "m'" : i === 1 ? "t'" : "s'");
+                         prefix = "";
                     } else if (i < 3) {
                         reflexive = reflexivePronouns[i] + " ";
                     } else {
@@ -897,7 +941,7 @@
                     }
                 }
                 
-                const fullText = (i === 0 ? displayPronoun : pronoun) + (i < 3 ? prefix : " ") + reflexive + text;
+                const fullText = (i === 0 ? displayPronoun : pronoun) + prefix + reflexive + text;
 
 
                 // Handle Impersonal verbs (falloir, pleuvoir)
@@ -907,7 +951,7 @@
                 row.className = 'conj-row';
                 row.onclick = () => speak(fullText);
                 row.innerHTML = `
-                    <div class="pronoun">${displayPronoun} ${reflexive}</div>
+                    <div class="pronoun">${displayPronoun}${prefix.trim()}${reflexive}</div>
                     <div class="conjugation">${text}</div>
                     <div class="icon">🔊</div>
                 `;
@@ -916,7 +960,9 @@
         }
 
         function speakInfinitive() {
-            speak(state.currentVerb.i);
+            if (state.currentVerb) {
+                speak(state.currentVerb.i);
+            }
         }
 
         // --- CONJUGATION ENGINE ---
@@ -952,7 +998,14 @@
                 if (!stem) {
                     // Derive stem from Nous form (Present tense)
                     const presNous = generateConjugations(v, 'pres')[3];
-                    stem = presNous.slice(0, -3); 
+                    // This is for verbs where the nous form is one character shorter, e.g. for -ir, -re verbs
+                    if (presNous.length > 3) {
+                        stem = presNous.slice(0, -3); 
+                    } else {
+                        // Fallback: If present conjugation fails or is too short (e.g., 'a' for avoir), 
+                        // attempt to derive from infinitive stem (e.g. 'parl' + 'ions' -> 'parlons')
+                        stem = v.i.slice(0, -2);
+                    }
                 }
                 return endings.imp.map(e => stem + e);
             }
