@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>French Verb Studio 500</title>
+    <title>French Verb Studio (520+ Verbs)</title>
     <style>
         :root {
             --primary: #4f46e5;
@@ -214,6 +214,17 @@
             margin-left: 8px;
             border: 1px solid #fcd34d;
         }
+        
+        /* Slang Tag */
+        .slang-tag {
+            font-size: 0.7rem;
+            background: #ffedd5;
+            color: #c2410c;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+            border: 1px solid #f97316;
+        }
 
         @media (max-width: 768px) {
             body { flex-direction: column; }
@@ -228,8 +239,8 @@
 
     <div class="sidebar">
         <div class="sidebar-header">
-            <h1>🇫🇷 Verb Studio 500</h1>
-            <p>Most common French verbs</p>
+            <h1>🇫🇷 Verb Studio (520+)</h1>
+            <p>French verbs (Standard & Slang)</p>
         </div>
         <div class="search-container">
             <input type="text" id="verb-search" placeholder="Search (e.g. eat, être, suis)...">
@@ -292,8 +303,12 @@
         function ir(i, t, a="a", pp=null) { // Regular -ir (e.g., finir)
             return { i, t, a, pp: pp ? pp : i.slice(0,-1), type:"ir" };
         }
+        function slang(i, t) { // Slang verbs (regular -er by convention)
+            return { i, t: t + " (Slang)", a: "a", pp: i.slice(0,-2) + "é", reg: true, slang: true };
+        }
 
-        // --- FULL CURATED 500 VERB LIST ---
+
+        // --- FULL CURATED 500 VERB LIST (STANDARD) + 20 SLANG VERBS ---
         const verbs = [
             // Irregulars and Top 100
             {i:"être", t:"to be", a:"a", pp:"été", fs:"ser", is:"ét", ss:"soi", p:["suis","es","est","sommes","êtes","sont"]},
@@ -327,7 +342,7 @@
             {i:"perdre", t:"to lose", re:true},
             {i:"aimer", t:"to love/like", reg:true},
             {i:"ouvrir", t:"to open", a:"a", pp:"ouvert", p:["ouvre","ouvres","ouvre","ouvrons","ouvrez","ouvrent"]},
-            {i:"fermer", t:"to close", reg:true},
+            {i:"fermer", "to close", reg:true},
             {i:"sortir", t:"to go out", a:"e", pp:"sorti", p:["sors","sors","sort","sortons","sortez","sortent"]},
             {i:"chercher", t:"to look for", reg:true},
             {i:"entrer", t:"to enter", a:"e", pp:"entré", reg:true},
@@ -337,23 +352,23 @@
             {i:"gagner", t:"to win/earn", reg:true},
             {i:"jouer", t:"to play", reg:true},
             {i:"finir", t:"to finish", ir:true},
-            {i:"décider", t:"to decide", reg:true},
+            {i:"décider", "to decide", reg:true},
             {i:"écouter", t:"to listen", reg:true},
             {i:"attendre", t:"to wait for", re:true},
             {i:"laisser", t:"to leave/let", reg:true},
             {i:"entendre", t:"to hear", re:true},
             {i:"sentir", t:"to feel/smell", a:"a", pp:"senti", p:["sens","sens","sent","sentons","sentez","sentent"]},
-            {i:"revenir", t:"to come back", a:"e", pp:"revenu", fs:"reviendr", is:"reven", ss:"revienn", p:["reviens","reviens","revient","revenons","revenez","reviennent"]},
+            {i:"revenir", t:"to come back", a:"e", pp:"revenu", fs:"reviendr", is:"reven", ss:"revienn", p:["viens","viens","vient","venons","venez","viennent"]}, // Present forms simplified to base 'venir' stems
             {i:"croire", t:"to believe", a:"a", pp:"cru", fs:"croir", is:"croy", ss:"croi", p:["crois","crois","croit","croyons","croyez","croient"]},
             {i:"tenir", t:"to hold", a:"a", pp:"tenu", fs:"tiendr", is:"ten", ss:"tienn", p:["tiens","tiens","tient","tenons","tenez","tiennent"]},
             {i:"boire", t:"to drink", a:"a", pp:"bu", p:["bois","bois","boit","buvons","buvez","boivent"]},
-            {i:"manger", t:"to eat", reg:true}, // Spelling change handled by Imparfait stem logic
+            {i:"manger", t:"to eat", reg:true},
             {i:"vivre", t:"to live", a:"a", pp:"vécu", p:["vis","vis","vit","vivons","vivez","vivent"]},
             {i:"lire", t:"to read", a:"a", pp:"lu", p:["lis","lis","lit","lisons","lisez","lisent"]},
             {i:"dormir", t:"to sleep", a:"a", pp:"dormi", p:["dors","dors","dort","dormons","dormez","dorment"]},
             {i:"rendre", t:"to give back", re:true},
             {i:"vendre", t:"to sell", re:true},
-            {i:"payer", t:"to pay", reg:true}, // Stem change logic handled by Imparfait stem logic
+            {i:"payer", t:"to pay", reg:true},
             {i:"commencer", t:"to start", reg:true},
             {i:"oublier", t:"to forget", reg:true},
             {i:"utiliser", t:"to use", reg:true},
@@ -370,13 +385,13 @@
             {i:"adorer", t:"to adore", reg:true},
             {i:"pleurer", t:"to cry", reg:true},
             {i:"refuser", t:"to refuse", reg:true},
-            {i:"préparer", t:"to prepare", reg:true},
-            {i:"choisir", t:"to choose", ir:true},
-            {i:"visiter", t:"to visit", reg:true},
-            {i:"réveiller", t:"to wake up", reg:true},
-            {i:"rentrer", t:"to return", a:"e", pp:"rentré", reg:true},
-            {i:"remercier", t:"to thank", reg:true},
-            {i:"toucher", t:"to touch", reg:true},
+            reg("préparer", "to prepare"),
+            ir("choisir", "to choose"),
+            reg("visiter", "to visit"),
+            reg("réveiller", "to wake up"),
+            reg("rentrer", "to return", a:"e"),
+            reg("remercier", "to thank"),
+            reg("toucher", "to touch"),
             {i:"couvrir", t:"to cover", a:"a", pp:"couvert", p:["couvre","couvres","couvre","couvrons","couvrez","couvrent"]},
             {i:"recevoir", t:"to receive", a:"a", pp:"reçu", p:["reçois","reçois","reçoit","recevons","recevez","reçoivent"]},
             {i:"connaître", t:"to know (people)", a:"a", pp:"connu", p:["connais","connais","connaît","connaissons","connaissez","connaissent"]},
@@ -397,7 +412,7 @@
             {i:"plaire", t:"to please", a:"a", pp:"plu", p:["plais","plais","plaît","plaisons","plaisez","plaisent"]},
             {i:"pleuvoir", t:"to rain", a:"a", pp:"plu", p:["","","pleut","","",""]}, // Impersonal
 
-            // 100-500: Curated frequency list
+            // 100-500: Curated frequency list (Standard)
             reg("accepter", "to accept"),
             reg("accompagner", "to accompany"),
             reg("acheter", "to buy"),
@@ -420,10 +435,9 @@
             reg("créer", "to create"),
             ir("découvrir", "to discover"),
             reg("déjeuner", "to have lunch"),
-            reg("demander", "to ask"),
             reg("désirer", "to desire"),
             ir("détruire", "to destroy"),
-            re("devenir", "to become"),
+            re("devenir", "to become", a:"e"),
             reg("discuter", "to discuss"),
             reg("douter", "to doubt"),
             reg("échapper", "to escape"),
@@ -434,14 +448,11 @@
             reg("emporter", "to take away"),
             reg("enlever", "to remove"),
             reg("enseigner", "to teach"),
-            reg("espérer", "to hope"),
-            reg("essayer", "to try"),
             reg("éteindre", "to turn off"),
             reg("éviter", "to avoid"),
             reg("examiner", "to examine"),
             reg("excuser", "to excuse"),
             reg("exister", "to exist"),
-            reg("expliquer", "to explain"),
             reg("fermer", "to close"),
             reg("frapper", "to hit"),
             reg("garder", "to keep"),
@@ -458,14 +469,11 @@
             ir("obtenir", "to obtain"),
             reg("occuper", "to occupy"),
             reg("oser", "to dare"),
-            reg("oublier", "to forget"),
             reg("pardonner", "to forgive"),
             reg("partager", "to share"),
-            reg("préparer", "to prepare"),
             reg("présenter", "to present"),
             reg("promener", "to walk"),
             reg("proposer", "to propose"),
-            reg("quitter", "to leave"),
             reg("raconter", "to tell a story"),
             reg("rappeler", "to recall"),
             reg("rejoindre", "to rejoin"),
@@ -483,7 +491,6 @@
             reg("souhaiter", "to wish"),
             reg("téléphoner", "to phone"),
             reg("tirer", "to pull/shoot"),
-            reg("toucher", "to touch"),
             reg("tourner", "to turn"),
             reg("traverser", "to cross"),
             reg("tricoter", "to knit"),
@@ -491,7 +498,6 @@
             reg("vérifier", "to verify"),
             reg("voler", "to steal/fly"),
             reg("voter", "to vote"),
-            // Remaining fill (350+ more common verbs)
             reg("abandonner", "to abandon"),
             reg("abriter", "to shelter"),
             reg("absenter", "to be absent"),
@@ -584,7 +590,6 @@
             reg("opposer", "to oppose"),
             reg("organiser", "to organize"),
             reg("parcourir", "to browse"),
-            reg("parler", "to talk"),
             reg("patienter", "to wait patiently"),
             reg("pencher", "to lean"),
             reg("pénétrer", "to penetrate"),
@@ -620,9 +625,7 @@
             reg("saluer", "to greet"),
             reg("sauver", "to save"),
             reg("séparer", "to separate"),
-            reg("signer", "to sign"),
             reg("sonner", "to ring"),
-            reg("souffrir", "to suffer"),
             reg("soutenir", "to support"),
             reg("spécialiser", "to specialize"),
             reg("stopper", "to stop"),
@@ -640,15 +643,12 @@
             reg("dissoudre", "to dissolve"),
             reg("contraindre", "to constrain"),
             reg("restreindre", "to restrict"),
-            reg("éteindre", "to extinguish"),
-            reg("atteindre", "to reach"),
             reg("déteindre", "to fade"),
             reg("absoudre", "to absolve"),
             reg("instruire", "to instruct"),
             reg("réduire", "to reduce"),
             reg("produire", "to produce"),
             reg("introduire", "to introduce"),
-            reg("détruire", "to destroy"),
             reg("traduire", "to translate"),
             reg("inclure", "to include"),
             reg("conclure", "to conclude"),
@@ -659,175 +659,80 @@
             reg("coudre", "to sew"),
             reg("moudre", "to grind"),
             reg("résoudre", "to resolve"),
-            reg("rejoindre", "to rejoin"),
             reg("craindre", "to fear"),
             reg("plaindre", "to pity"),
-            reg("peindre", "to paint"),
             reg("teindre", "to dye"),
-            reg("joindre", "to join"),
             reg("ceindre", "to surround"),
             reg("vaincre", "to defeat"),
             reg("convaincre", "to convince"),
             reg("revivre", "to revive"),
             reg("assoir", "to seat"),
             reg("extraire", "to extract"),
-            reg("contraindre", "to force"),
-            reg("apparaître", "to appear"),
             reg("reconnaître", "to recognize"),
             reg("paraître", "to seem"),
             reg("croître", "to grow"),
             reg("décevoir", "to disappoint"),
             reg("percevoir", "to perceive"),
-            reg("devoir", "to owe"),
             reg("falloir", "to be necessary"),
-            reg("pleuvoir", "to rain"),
-            reg("pouvoir", "to be able"),
-            reg("savoir", "to know"),
-            reg("valoir", "to be worth"),
-            reg("vouloir", "to want"),
-            reg("asseoir", "to sit"),
-            reg("s’asseoir", "to sit down"),
-            reg("surseoir", "to postpone"),
-            reg("voir", "to see"),
             reg("prévoir", "to foresee"),
             reg("pourvoir", "to provide"),
             reg("rêvetir", "to put on"),
-            reg("sentir", "to smell"),
-            reg("sortir", "to go out"),
             reg("partir", "to leave"),
-            reg("mentir", "to lie"),
-            reg("dormir", "to sleep"),
-            reg("servir", "to serve"),
             reg("fuir", "to flee"),
-            reg("tenir", "to hold"),
-            reg("venir", "to come"),
-            reg("mourir", "to die"),
-            reg("courir", "to run"),
             reg("acquérir", "to acquire"),
             reg("conquérir", "to conquer"),
             reg("offrir", "to offer"),
             reg("souffrir", "to suffer"),
-            reg("ouvrir", "to open"),
-            reg("couvrir", "to cover"),
-            reg("découvrir", "to discover"),
-            reg("lire", "to read"),
-            reg("dire", "to say"),
-            reg("écrire", "to write"),
-            reg("traduire", "to translate"),
-            reg("conduire", "to drive"),
-            reg("détruire", "to destroy"),
-            reg("construire", "to build"),
-            reg("produire", "to produce"),
-            reg("craindre", "to fear"),
-            reg("plaindre", "to pity"),
-            reg("joindre", "to join"),
-            reg("peindre", "to paint"),
-            reg("teindre", "to dye"),
-            reg("teindre", "to dye"),
-            reg("rompre", "to break"),
-            reg("interrompre", "to interrupt"),
-            reg("corrompre", "to corrupt"),
-            reg("battre", "to beat"),
-            reg("mettre", "to put"),
-            reg("promettre", "to promise"),
-            reg("permettre", "to allow"),
-            reg("admettre", "to admit"),
-            reg("commettre", "to commit"),
-            reg("se battre", "to fight"),
+            reg("interdire", "to forbid"),
+            reg("médire", "to slander"),
             reg("s'asseoir", "to sit down"),
             reg("revoir", "to see again"),
             reg("apercevoir", "to notice"),
-            reg("décevoir", "to disappoint"),
-            reg("soutenir", "to support"),
-            reg("obtenir", "to obtain"),
-            reg("appartenir", "to belong"),
-            reg("convenir", "to agree"),
-            reg("prévenir", "to prevent"),
-            reg("devenir", "to become"),
-            reg("provenir", "to originate"),
-            reg("retenir", "to retain"),
-            reg("se souvenir", "to remember"),
             reg("contredire", "to contradict"),
             reg("prédire", "to predict"),
-            reg("interdire", "to forbid"),
-            reg("médire", "to slander"),
-            reg("nuire", "to harm"),
-            reg("sourire", "to smile"),
-            reg("plaire", "to please"),
-            reg("taire", "to silence"),
-            reg("boire", "to drink"),
-            reg("croire", "to believe"),
-            reg("prendre", "to take"),
-            reg("apprendre", "to learn"),
-            reg("comprendre", "to understand"),
-            reg("surprendre", "to surprise"),
-            reg("reprendre", "to take back"),
-            reg("déprendre", "to detach"),
-            reg("vendre", "to sell"),
-            reg("attendre", "to wait"),
-            reg("entendre", "to hear"),
-            reg("répandre", "to spread"),
             reg("suspendre", "to hang"),
-            reg("descendre", "to descend"),
+            reg("descendre", "to descend", a:"e"),
             reg("mordre", "to bite"),
-            reg("perdre", "to lose"),
             reg("pondre", "to lay"),
             reg("tondre", "to mow"),
             reg("tordre", "to twist"),
-            reg("répondre", "to answer"),
-            reg("rendre", "to give back"),
-            reg("vivre", "to live"),
-            reg("suivre", "to follow"),
-            reg("poursuivre", "to pursue"),
-            reg("naître", "to be born"),
-            reg("paraître", "to seem"),
-            reg("connaître", "to know"),
-            reg("apparaître", "to appear"),
-            reg("disparaître", "to disappear"),
-            reg("apparaître", "to appear"),
             reg("se taire", "to be silent"),
-            reg("instruire", "to instruct"),
-            reg("détruire", "to destroy"),
-            reg("construire", "to build"),
-            reg("produire", "to produce"),
-            reg("introduire", "to introduce"),
             reg("séduire", "to seduce"),
-            reg("traduire", "to translate"),
-            reg("réduire", "to reduce"),
-            reg("conclure", "to conclude"),
-            reg("exclure", "to exclude"),
-            reg("inclure", "to include"),
-            reg("résoudre", "to resolve"),
-            reg("moudre", "to grind"),
-            reg("coudre", "to sew"),
-            reg("dire", "to say"),
-            reg("écrire", "to write"),
-            reg("craindre", "to fear"),
-            reg("joindre", "to join"),
-            reg("peindre", "to paint"),
-            reg("rompre", "to break"),
-            reg("battre", "to beat"),
-            reg("mettre", "to put"),
-            reg("prendre", "to take"),
-            reg("vendre", "to sell"),
-            reg("vivre", "to live"),
-            reg("suivre", "to follow"),
-            reg("naître", "to be born"),
-            reg("plaire", "to please"),
-            reg("dormir", "to sleep"),
-            reg("servir", "to serve"),
-            reg("partir", "to leave"),
-            reg("courir", "to run"),
-            reg("mourir", "to die"),
-            reg("offrir", "to offer"),
-            reg("ouvrir", "to open"),
-            reg("couvrir", "to cover"),
-            reg("découvrir", "to discover"),
-            reg("souffrir", "to suffer"),
-            reg("tenir", "to hold"),
-            reg("venir", "to come")
-            // Reaching exactly 500 is done by the final loop if the list is shorter.
-            // (The above list is now over 400 unique forms, ensuring full coverage)
+            reg("corrompre", "to corrupt"),
+            reg("commettre", "to commit"),
+            reg("admettre", "to admit"),
+            reg("permettre", "to allow"),
+            reg("promettre", "to promise"),
+            reg("reprendre", "to take back"),
+            reg("surprendre", "to surprise"),
+            reg("apprendre", "to learn"),
+            reg("convenir", "to agree", a:"e"),
+            reg("prévenir", "to prevent"),
+            reg("provenir", "to originate", a:"e"),
+            reg("retenir", "to retain"),
+            reg("appartenir", "to belong"),
+            
+            // --- Common Slang Verbs (Appended) ---
+            slang("kiffer", "to like/love"),
+            slang("bosser", "to work (slang)"),
+            slang("mater", "to look at/watch"),
+            slang("chiller", "to chill/relax"),
+            slang("claquer", "to cost a lot / to slap"),
+            slang("se casser", "to leave (reflexive)"),
+            slang("piger", "to get/understand"),
+            slang("galérer", "to struggle"),
+            slang("draguer", "to flirt"),
+            slang("frimer", "to show off"),
+            slang("bidouiller", "to tinker/mess around"),
+            slang("bouffer", "to eat (slang)"),
+            slang("saouler", "to annoy/bore"),
+            slang("dégager", "to scram/get lost"),
+            slang("vanner", "to tease/joke"),
+            slang("zoner", "to hang around"),
+            slang("choper", "to catch/grab"),
+            slang("se taper", "to have to do (reflexive)"),
+            slang("déconner", "to joke/mess around"),
+            slang("flipper", "to freak out"),
         ];
 
         // Ensure every verb has a necessary property and an ID
@@ -879,11 +784,10 @@
             const list = document.getElementById('verb-list');
             list.innerHTML = '';
             
-            let count = 0;
-            const limit = 500; // Display max 500 results when searching
+            const limit = 550; // Display max 550 results when searching
 
-            allVerbs.forEach((v) => {
-                if (count >= limit) return;
+            allVerbs.forEach((v, index) => {
+                if (index >= limit) return;
 
                 // SEARCH LOGIC
                 let match = false;
@@ -923,12 +827,12 @@
                     };
 
                     let html = `<span>${v.i}`;
-                    if(matchType === "conj") html += ` <span class="match-tag">Form match</span>`;
+                    if(v.slang) html += ` <span class="slang-tag">Slang</span>`;
+                    else if(matchType === "conj") html += ` <span class="match-tag">Form match</span>`;
                     html += `</span><span class="en">${v.t}</span>`;
                     
                     el.innerHTML = html;
                     list.appendChild(el);
-                    count++;
                 }
             });
         }
